@@ -1,5 +1,7 @@
 import numpy as np
 
+from decimal import Decimal, ROUND_HALF_UP
+
 class Node:
     __slots__ = 'id', 'x', 'y' # Declare members of class as slots for faster access
     def __init__( self, arglist ):
@@ -8,11 +10,15 @@ class Node:
         self.y = float( arglist[2] ) # Set y member
 
 class Edge:
-    __slots__ = 'dest', 'cost'
+    __slots__ = 'src_id', 'dest_id', 'cost'
     def __init__(self, source_node : Node, dest_node : Node ):
-        self.dest = dest_node
+        self.src_id = source_node.id
+        self.dest_id = dest_node.id
         # Calculate cost of the edge as euclidian distance
-        self.cost = np.sqrt( ( source_node.x - dest_node.x)**2 +  ( source_node.y - dest_node.y )**2 )
+        cost = Decimal( np.sqrt( ( source_node.x - dest_node.x)**2 +  ( source_node.y - dest_node.y )**2 ) )
+        self.cost = int( cost.quantize( 0, rounding=ROUND_HALF_UP ) ) # Round distance to integer such that 0.5 rounds up
+    def __lt__(self, other):
+        return self.cost < other.cost
 
 class Solution:
     __slots__ = 'quality', 'node_list'
@@ -34,3 +40,4 @@ class Trace:
 
     def add_tracepoint( self, time : float, quality : int ):
         self.tracepoints.append( [ '%.2f'%time, quality ] )
+
