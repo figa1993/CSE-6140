@@ -30,7 +30,7 @@ def get_min_cost(dest_group):
 def greedy_heuristic(dist_matrix,seed_num):
     random.seed(seed_num)
     initialdist_matrix = dist_matrix
-    start_index = random.randint(0,dist_matrix.shape[0])
+    start_index = random.randint(0,dist_matrix.shape[0]-1)
     total_cost = 0
     route = []
     rem_nodes = np.ones(dist_matrix.shape[0])
@@ -62,7 +62,7 @@ def two_opt(route_matrix,dist_matrix,cost):
     for i in range(1,len(route_matrix)-2):
         for k in range(i+i,len(route_matrix)):
             improved_route = route_matrix[:]
-            improved_route[i:k] = route_matrix[k-1:i-1:-1]
+            improved_route[i:k] = route_matrix[k-1:i-1:-1] #Here we will take the section to flip and flip it and replace the order.
             new_cost = calculate_route_cost(improved_route,dist_matrix)
             if new_cost < calculate_route_cost(bestroute,dist_matrix):
                 bestroute = improved_route
@@ -81,12 +81,17 @@ def ls1( nodes , timeout : int,seed_num ):
     starttime = time.time()
     mat = distance_calculator(nodes)
     route,total_cost = greedy_heuristic(mat,seed_num)
-    print(route,total_cost)
-    trace.add_tracepoint(round(time.time() - starttime,2),total_cost)
+    #print(route,total_cost)
+    trace.add_tracepoint(time.time() - starttime,total_cost)
     improving = True
     mat = distance_calculator(nodes)
+    if time.time()-starttime > timeout:
+            return Solution( total_cost, route), trace
     while improving:
+        if time.time()-starttime > timeout:
+            return Solution( total_cost, route), trace
         improving, route, total_cost = two_opt(route,mat,total_cost)
-        print(route,total_cost)
+        trace.add_tracepoint(time.time() - starttime,total_cost)
+        #print(route,total_cost)
     return Solution( total_cost, route), trace
 
