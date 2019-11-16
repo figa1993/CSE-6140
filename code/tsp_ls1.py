@@ -13,7 +13,7 @@ def distance_calculator(nodes):
     for x in range(num_locs):
         for y in range(num_locs):
             mat[x,y] = Edge(nodes[x],nodes[y])
-            if mat[x,y].cost == float(0):
+            if x == y:
                 mat[x,y].cost = np.inf
     return mat
 
@@ -49,18 +49,44 @@ def greedy_heuristic(dist_matrix,seed_num):
     route.append(route[0])
     return route,total_cost
 
+def calculate_route_cost(route,cost_matrix):
+    cost = 0
+    for i in range(0,len(route)-1):
+        cost += cost_matrix[route[i],route[i+1]].cost
+    return cost
+
+
 def two_opt(route_matrix,dist_matrix,cost):
-    pass
+    bestroute = route_matrix
+    improvement = False
+    for i in range(1,len(route_matrix)-2):
+        for k in range(i+i,len(route_matrix)):
+            improved_route = route_matrix[:]
+            improved_route[i:k] = route_matrix[k-1:i-1:-1]
+            new_cost = calculate_route_cost(improved_route,dist_matrix)
+            if new_cost < calculate_route_cost(bestroute,dist_matrix):
+                bestroute = improved_route
+                improvement = True
+    route_matrix = bestroute
+    return improvement, route_matrix, calculate_route_cost(route_matrix,dist_matrix)
+
+def printmat(mat):
+    for i in range(0,len(mat)):
+        for j in range(0,len(mat)):
+            print(mat[i,j].cost, end =" ")  
+        print()    
 
 def ls1( nodes , timeout : int,seed_num ):
+    trace = Trace()
     starttime = time.time()
     mat = distance_calculator(nodes)
     route,total_cost = greedy_heuristic(mat,seed_num)
-    print(time.time() - starttime)
     print(route,total_cost)
-    two_opt(route,mat,total_cost)
-    trace = Trace()
-    trace.add_tracepoint( 0.234, 5 )
-    trace.add_tracepoint( 2.4545, 89 )
-    return Solution( 0, [ 0, 1, 2 ] ), trace
+    trace.add_tracepoint(round(time.time() - starttime,2),total_cost)
+    improving = True
+    mat = distance_calculator(nodes)
+    while improving:
+        improving, route, total_cost = two_opt(route,mat,total_cost)
+        print(route,total_cost)
+    return Solution( total_cost, route), trace
 
