@@ -27,10 +27,9 @@ def get_min_cost(dest_group):
     return min_cost, min_index
 
 #This will solve a greedy problem to give us a place to start
-def greedy_heuristic(dist_matrix,seed_num):
-    random.seed(seed_num)
+def greedy_heuristic(dist_matrix,index_start):
     initialdist_matrix = dist_matrix
-    start_index = random.randint(0,dist_matrix.shape[0]-1)
+    start_index = index_start#random.randint(0,dist_matrix.shape[0]-1)
     total_cost = 0
     route = []
     rem_nodes = np.ones(dist_matrix.shape[0])
@@ -59,7 +58,7 @@ def calculate_route_cost(route,cost_matrix):
 def two_opt(route_matrix,dist_matrix,cost):
     bestroute = route_matrix
     improvement = False
-    for i in range(1,len(route_matrix)-2):
+    for i in range(1,len(route_matrix)-1):
         for k in range(i+i,len(route_matrix)):
             improved_route = route_matrix[:]
             improved_route[i:k] = route_matrix[k-1:i-1:-1] #Here we will take the section to flip and flip it and replace the order.
@@ -77,21 +76,46 @@ def printmat(mat):
         print()    
 
 def ls1( nodes , timeout : int,seed_num ):
+    random.seed(seed_num)
+    top_cost = np.inf
+    top_route = []
     trace = Trace()
     starttime = time.time()
     mat = distance_calculator(nodes)
-    route,total_cost = greedy_heuristic(mat,seed_num)
-    #print(route,total_cost)
-    trace.add_tracepoint(time.time() - starttime,total_cost)
-    improving = True
-    mat = distance_calculator(nodes)
-    if time.time()-starttime > timeout:
-            return Solution( total_cost, route), trace
-    while improving:
-        if time.time()-starttime > timeout:
-            return Solution( total_cost, route), trace
-        improving, route, total_cost = two_opt(route,mat,total_cost)
-        trace.add_tracepoint(time.time() - starttime,total_cost)
+    start_nodes = []
+    for i in range(0,len(nodes)):
+        start_nodes.append(i)
+    random.shuffle(start_nodes)
+
+    for x in start_nodes:
+        print(x)
+        print(top_cost)
+        route,total_cost = greedy_heuristic(mat,x)
+        if total_cost < top_cost:
+            top_cost = total_cost
+            top_route = route
+            trace.add_tracepoint(time.time() - starttime,total_cost)
         #print(route,total_cost)
-    return Solution( total_cost, route), trace
+        #trace.add_tracepoint(time.time() - starttime,total_cost)
+        improving = True
+        mat = distance_calculator(nodes)
+        if time.time()-starttime > timeout:
+            if total_cost < top_cost:
+                trace.add_tracepoint(time.time() - starttime,total_cost)
+                return Solution( total_cost, top_route), trace
+            else:
+                return Solution(top_cost, top_route), trace
+        while improving:
+            if time.time()-starttime > timeout:
+                if total_cost < top_cost:
+                    trace.add_tracepoint(time.time() - starttime,total_cost)
+                    return Solution( total_cost, route), trace
+                else:
+                    return Solution(top_cost, top_route), trace      
+            improving, route, total_cost = two_opt(route,mat,total_cost)
+            if total_cost < top_cost:
+                top_cost = total_cost
+                top_route = route
+                trace.add_tracepoint(time.time() - starttime,total_cost)              #print(route,total_cost)
+    return Solution( top_cost, top_route), trace
 
