@@ -6,12 +6,12 @@ from tsp_types import Node
 import bisect
 import heapq
 import numpy as np
+import copy
 
 class UnionFindSet:
-    __slots__='id','rank','parent'
+    __slots__='rank','parent'
 
     def __init__(self, node : Node ):
-        self.id = node.id
         self.rank = 0
         self.parent = self
 
@@ -43,36 +43,44 @@ class UnionFind:
         self.n_sets += 1
         self.set_list.append( set )
 
+# TODO: turn this into a "PathMaker"
+class Graph:
+    __slots__ = 'node_degree_list','edge_list', 'degree'
+    def __init__(self, n):
+        self.node_degree_list = [0]*n
+        self.edge_list = []
+        self.degree = 0
+    def add_edge(self, e):
+        self.node_degree_list[ e.src_id] += 1
+        self.node_degree_list[ e.dest_id] += 1
+        if self.node_degree_list[e.src_id] > self.degree or self.node_degree_list[ e.dest_id] > self.degree:
+            self.degree += 1 # since the degree of a node can only increase by 1 when adding any edge
+        self.edge_list.append( e )
+
 class Problem:
-    __slots__='LB','id','union_find'
-    def __init__(self, in_LB : int, in_id : str, in_union_find : UnionFind):
-        self.LB = in_LB
-        self.id = in_id
-        self.union_find = in_union_find
+    __slots__='LB','subgraph','union_find','index'
+    def __init__(self, LB : int, subgraph : Graph, union_find : UnionFind, index : int):
+        self.LB = LB
+        self.subgraph = subgraph
+        self.union_find = union_find
+        self.index = index
     def __lt__(self, other):
         return self.LB < other.LB
 
-# def calculate_lb( edge_list, start_index, flags : {}, flag_cost ):
-#     flags_copy = flags.copy() # Shallow copy of the flags
-#
-#     i = start_index
-#     while len( flags_copy ) != 0:
-#         e = edge_list[i]
-#         # If either element can be popped from
-#         if flags.has_key( e.src_id,0 ) or flags.has_key( e.dest_id, 0 ):
-#             flag_cost += e.cost
-#         else:
-#             continue
+def calculate_lb( edge_list, problem : Problem, parent_lb ):
 
-def calculate_lb( edge_list, start_index, current_union_find : UnionFind, current_cost ):
+    # Check if the graph violates path critiera (max degree of any node being 2)
+    if problem.subgraph.degree >= 3:
+        parent_lb = np.infty
 
-    # Make a shallow copy of the union find
-    union_find = UnionFind()
-    union_find.set_list = current_union_find.set_list[:]
-    union_find.n_sets = current_union_find.n_sets
+    # Make a deep copy of the union find
+    union_find = copy.deepcopy( problem.union_find )
+    # union_find = UnionFind()
+    # union_find.set_list = current_union_find.set_list[:]
+    # union_find.n_sets = current_union_find.n_sets
 
     # Iterate through undecided edges
-    for i in range(start_index, len(edge_list) ):
+    for i in range( problem.index, len(edge_list) ):
         e = edge_list[i]
         u = union_find.set_list[e.src_id]
         v = union_find.set_list[e.dest_id]
@@ -81,13 +89,30 @@ def calculate_lb( edge_list, start_index, current_union_find : UnionFind, curren
         if u.find() != v.find():
             union(u, v) # Take a union of the sets they belong to
             union_find.n_sets -= 1 # Decrease the number of sets by 1
-            current_cost += e.cost # Add the cost of the edge which joins the sets
+            parent_lb += e.cost # Add the cost of the edge which joins the sets
 
     if union_find.n_sets != 1: # There exists no way to create a connected graph with the undecided edges
-        current_cost = np.infty
+        parent_lb = np.infty
 
-    return current_cost
+    # Set the Problem's lower bound
+    problem.LB = parent_lb
 
+def calculate_cost( edge_list, problem : Problem ):
+    solution = Solution()
+
+    solution.node_list.append( edge_list[0].src_id )
+    prev_node = edge_list[1]
+
+    # Because the graph must be a path
+    for edge in edge_list :
+
+
+    # for i in range(0, m):
+    #     if solution_id[i]=="1":
+    #         solution.quality += edge_list[i].cost
+            # solution.node_list =
+
+    # return cost
 
 
 def bnb( nodes , timeout : int ):
@@ -102,35 +127,52 @@ def bnb( nodes , timeout : int ):
             e = Edge( nodes[i], nodes[j] )
             bisect.insort( edge_list, e )
 
+    m = len(edge_list) # Cache the number of edges
 
     union_find = UnionFind()
     for i in range(n):
         set = UnionFindSet( nodes[i] )
         union_find.add_set( set )
 
-    # Construct an empty dictionary to memoize node data
-    subproblems = {}
-
     # Construct an empty heapq to represent frontier
     frontier = []
 
     # Create the root node and added it to frontier
-    # flag_dict = {}
-    # for node in nodes:
-    #     flag_dict[ node.id ] = True
-    root = Problem( 0, "", union_find )
+    root = Problem( 0, Graph(), union_find )
+    heapq.heappush( frontier,  root)
 
-    heapq.heappush( frontier,  Problem)
+    best = Solution()
 
     # Python version of a do-while loop
     while( len(frontier) > 0 ):
         current = heapq.heappop( frontier ) # Pop queue to get most promising node
 
-        # Investigate both expansions
+        e_index = current.index + 1
 
+        # Construct subproblem without the next edge
+        child_0 = Problem()
+        child_0.index = e_index
+        child_0.union_find = copy.deepcopy( current.union_find )
+        child_0.LB = calculate_lb( edge_list, child_0, current.LB )
+
+        # Construct subproblem with the next edge
+        child_1 = Problem()
+        child_1.index = e_index
+        child_1.union_find = copy.deepcopy(current.union_find)
+        e = edge_list[child_1.index]
+        u = child_1.union_find.set_list[e.src_id]
+        v = child_1.union_find.set_list[e.dest_id]
+        union(u, v)  # Take a union of the sets they belong to
+        child_1.subgraph.add_edge( e )
+        child_1.LB = calculate_lb( edge_list, child_1, current.LB )
 
         # Check if these are leaves
+        if e_index == m:
+            solution = Solution()
+            # Check if child_0 is new best
+
             # update best solution if better than current best
+
         # else calculate LB and add to frontier if feasible
 
 
