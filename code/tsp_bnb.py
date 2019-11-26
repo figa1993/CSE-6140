@@ -2,6 +2,8 @@ from tsp_types import Solution
 from tsp_types import Trace
 from tsp_types import Edge
 from tsp_types import Node
+from tsp_types import UndirectedGraph
+from tsp_types import calculate_edge_cost
 
 import bisect
 import heapq
@@ -44,18 +46,18 @@ class UnionFind:
         self.set_list.append( set )
 
 # TODO: turn this into a "PathMaker"
-class Graph:
-    __slots__ = 'node_degree_list','edge_list', 'degree'
-    def __init__(self, n):
-        self.node_degree_list = [0]*n
-        self.edge_list = []
-        self.degree = 0
-    def add_edge(self, e):
-        self.node_degree_list[ e.src_id] += 1
-        self.node_degree_list[ e.dest_id] += 1
-        if self.node_degree_list[e.src_id] > self.degree or self.node_degree_list[ e.dest_id] > self.degree:
-            self.degree += 1 # since the degree of a node can only increase by 1 when adding any edge
-        self.edge_list.append( e )
+# class Graph:
+#     __slots__ = 'node_degree_list','edge_list', 'degree'
+#     def __init__(self, n):
+#         self.node_degree_list = [0]*n
+#         self.edge_list = []
+#         self.degree = 0
+#     def add_edge(self, e):
+#         self.node_degree_list[ e.src_id] += 1
+#         self.node_degree_list[ e.dest_id] += 1
+#         if self.node_degree_list[e.src_id] > self.degree or self.node_degree_list[ e.dest_id] > self.degree:
+#             self.degree += 1 # since the degree of a node can only increase by 1 when adding any edge
+#         self.edge_list.append( e )
 
 class Problem:
     __slots__='LB','subgraph','union_find','index'
@@ -104,7 +106,7 @@ def calculate_cost( edge_list, problem : Problem ):
     prev_node = edge_list[1]
 
     # Because the graph must be a path
-    for edge in edge_list :
+    for edge in edge_list
 
 
     # for i in range(0, m):
@@ -114,6 +116,47 @@ def calculate_cost( edge_list, problem : Problem ):
 
     # return cost
 
+def generate_solution( edge_list : [ Edge ], node_list : [ Node ], problem : Problem  ):
+    solution = Solution()
+
+    # Traverse the graph to generate path and its cost
+    # Traverse along the first edge
+    prev = 0
+    next = problem.subgraph.node_edges[0].dest_id
+    # Add the nodes to the deque
+    solution.node_list.append(next)
+    solution.node_list.append(0)
+    while len(problem.subgraph.node_edges[next]) == 2 :
+        if problem.subgraph.node_edges[next][0].dest_id == prev:
+            # The first edge in the next node returns to previous, traverse along second edge
+            e = problem.subgraph.node_edges[prev][1]
+        else:
+            # The 2nd edge in the next node returns to previous, traverse along first edge
+            e = problem.subgraph.node_edges[prev][0]
+        prev = next
+        next = e.dest_id
+        solution.node_list.appendleft(next) # Add the next node to the LEFT SIDE of deque
+        solution.quality += e.cost # Add the edge cost to the solution quality
+
+    # Traverse along the second edge (if applicable)
+    prev = 0
+    next = problem.subgraph.node_edges[1].dest_id
+    if( len(problem.subgraph.node_edges[prev]) == 2 ):
+        if problem.subgraph.node_edges[next][0].dest_id == prev:
+            # The first edge in the next node returns to previous, traverse along second edge
+            e = problem.subgraph.node_edges[prev][1]
+        else:
+            # The 2nd edge in the next node returns to previous, traverse along first edge
+            e = problem.subgraph.node_edges[prev][0]
+        prev = next
+        next = e.dest_id
+        solution.node_list.append(next) # Add the next node to the RIGHT SIDE of deque
+        solution.quality += e.cost # Add the edge cost to the solution quality
+
+    # Add the final edge between last node and first node
+    solution.quality +=  calculate_edge_cost( node_list[solution.node_list[0]], node_list[solution.node_list[-1]] )
+
+    return solution
 
 def bnb( nodes , timeout : int ):
 
@@ -138,7 +181,7 @@ def bnb( nodes , timeout : int ):
     frontier = []
 
     # Create the root node and added it to frontier
-    root = Problem( 0, Graph(), union_find )
+    root = Problem( 0, UndirectedGraph( nodes ), union_find )
     heapq.heappush( frontier,  root)
 
     best = Solution()
@@ -154,17 +197,23 @@ def bnb( nodes , timeout : int ):
         child_0.index = e_index
         child_0.union_find = copy.deepcopy( current.union_find )
         child_0.LB = calculate_lb( edge_list, child_0, current.LB )
+        heapq.heappush( frontier, child_0 )
 
         # Construct subproblem with the next edge
-        child_1 = Problem()
-        child_1.index = e_index
-        child_1.union_find = copy.deepcopy(current.union_find)
-        e = edge_list[child_1.index]
-        u = child_1.union_find.set_list[e.src_id]
-        v = child_1.union_find.set_list[e.dest_id]
-        union(u, v)  # Take a union of the sets they belong to
-        child_1.subgraph.add_edge( e )
-        child_1.LB = calculate_lb( edge_list, child_1, current.LB )
+        e = edge_list[e_index] # Get the edge to add
+        # Check if path condition ( degree of every node < 3 ) will not be violated
+        if len(current.subgraph.node_edges[e.src_id]) < 2 and len(current.subgraph.node_edges[e.dest_id]) < 2:
+            child_1 = Problem()
+            child_1.union_find = copy.deepcopy(current.union_find)
+            u = child_1.union_find.set_list[e.src_id]
+            v = child_1.union_find.set_list[e.dest_id]
+            union(u, v)  # Take a union of the sets they belong to
+            child_1.subgraph.add_edge(e)
+            if( child_1.union_find.n_sets == 1 ):
+                # This is a fully connected graph with each node degree <=2 i.e. a simple path which is a sol'n
+
+            child_1.index = e_index
+            child_1.LB = calculate_lb( edge_list, child_1, current.LB )
 
         # Check if these are leaves
         if e_index == m:
