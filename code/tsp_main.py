@@ -57,9 +57,9 @@ if __name__ == '__main__':
     if args.alg == 'BnB':
         solution, trace = bnb( Nodes, args.time )
     if args.alg == 'LS1':
-        solution, trace = ls1( Nodes, args.time )
+        solution, trace = ls1( Nodes, args.time ,args.seed)
     if args.alg == 'LS2':
-        solution, trace = ls2( Nodes, args.time )
+        solution, trace = ls2( Nodes, args.time,args.seed )
     if args.alg == 'Approx':
         solution, trace = approx( Nodes, args.time )
 
