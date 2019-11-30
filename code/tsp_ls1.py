@@ -91,8 +91,6 @@ def ls1( nodes , timeout : int,seed_num ):
     random.shuffle(start_nodes)
 
     for x in start_nodes:
-        print(x)
-        print(top_cost)
         # TODO: Make a deepcopy of the matrix and pass it in on line 97, that way you won't have to recalc at line 105
         route,total_cost = greedy_heuristic(mat,x)
         if total_cost < top_cost:

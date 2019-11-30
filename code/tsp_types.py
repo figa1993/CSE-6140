@@ -13,6 +13,7 @@ class Node:
 def calculate_edge_cost( src : Node, dest : Node ):
     cost = Decimal(np.sqrt((src.x - dest.x) ** 2 + (src.y - dest.y) ** 2))
     cost = int(cost.quantize(0, rounding=ROUND_HALF_UP))  # Round distance to integer such that 0.5 rounds up
+    return cost
 
 
 class Edge:
@@ -21,7 +22,7 @@ class Edge:
         self.src_id = source_node.id
         self.dest_id = dest_node.id
         # Calculate cost of the edge as euclidian distance
-        self.cost = calculate_edge_cost( source_node.id, dest_node.id )
+        self.cost = calculate_edge_cost( source_node, dest_node)
 
     def __lt__(self, other):
         return self.cost < other.cost
