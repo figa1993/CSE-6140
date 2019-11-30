@@ -4,82 +4,36 @@ from tsp_types import Edge
 from tsp_types import Node
 from tsp_types import UndirectedGraph
 from tsp_types import calculate_edge_cost
+from tsp_types import Tracepoint
+from tsp_types import Trace
+from UnionFind import UnionFindSet, UnionFind, union
+from tsp_approx import mst_approx
 
+from multiprocessing import Process, Pipe, Queue
 import bisect
 import heapq
 import numpy as np
 import copy
-
-class UnionFindSet:
-    __slots__='rank','parent'
-
-    def __init__(self, node : Node ):
-        self.rank = 0
-        self.parent = self
-
-    def find(self):
-        if self.parent != self:
-            self.parent = self.parent.find()
-        return self.parent
-
-def union( x : UnionFindSet, y : UnionFindSet ):
-    x_root = x.find()
-    y_root = y.find()
-    if x_root.id == y_root.id:
-        return
-
-    if x_root.rank == y_root.rank:
-        y_root.parent = x_root
-        x_root.rank += 1
-    elif x_root.rank > y_root.rank:
-        y_root.parent = x_root
-    else:
-        x_root.parent = y_root
-
-class UnionFind:
-    __slots__ = 'n_sets', 'set_list'
-    def __init__(self):
-        self.n_sets = 0
-        self.set_list = []
-    def add_set(self, set : UnionFindSet):
-        self.n_sets += 1
-        self.set_list.append( set )
-
-# TODO: turn this into a "PathMaker"
-# class Graph:
-#     __slots__ = 'node_degree_list','edge_list', 'degree'
-#     def __init__(self, n):
-#         self.node_degree_list = [0]*n
-#         self.edge_list = []
-#         self.degree = 0
-#     def add_edge(self, e):
-#         self.node_degree_list[ e.src_id] += 1
-#         self.node_degree_list[ e.dest_id] += 1
-#         if self.node_degree_list[e.src_id] > self.degree or self.node_degree_list[ e.dest_id] > self.degree:
-#             self.degree += 1 # since the degree of a node can only increase by 1 when adding any edge
-#         self.edge_list.append( e )
+import time
 
 class Problem:
-    __slots__='LB','subgraph','union_find','index'
-    def __init__(self, LB : int, subgraph : Graph, union_find : UnionFind, index : int):
+    __slots__='LB','subgraph','subgraph_cost','union_find','index'
+    def __init__(self, LB : int = 0 , subgraph : UndirectedGraph = None , subgraph_cost : int = 0,
+                 union_find : UnionFind = None, index  : int = -1):
         self.LB = LB
         self.subgraph = subgraph
         self.union_find = union_find
         self.index = index
+        self.subgraph_cost = subgraph_cost
     def __lt__(self, other):
         return self.LB < other.LB
 
-def calculate_lb( edge_list, problem : Problem, parent_lb ):
+def calculate_lb( edge_list, problem : Problem ):
 
-    # Check if the graph violates path critiera (max degree of any node being 2)
-    if problem.subgraph.degree >= 3:
-        parent_lb = np.infty
+    problem.LB = problem.subgraph_cost
 
     # Make a deep copy of the union find
     union_find = copy.deepcopy( problem.union_find )
-    # union_find = UnionFind()
-    # union_find.set_list = current_union_find.set_list[:]
-    # union_find.n_sets = current_union_find.n_sets
 
     # Iterate through undecided edges
     for i in range( problem.index, len(edge_list) ):
@@ -91,30 +45,12 @@ def calculate_lb( edge_list, problem : Problem, parent_lb ):
         if u.find() != v.find():
             union(u, v) # Take a union of the sets they belong to
             union_find.n_sets -= 1 # Decrease the number of sets by 1
-            parent_lb += e.cost # Add the cost of the edge which joins the sets
+            problem.LB += e.cost # Add the cost of the edge which joins the sets
+        if union_find.n_sets == 1: # MST has been found
+            break
 
     if union_find.n_sets != 1: # There exists no way to create a connected graph with the undecided edges
-        parent_lb = np.infty
-
-    # Set the Problem's lower bound
-    problem.LB = parent_lb
-
-def calculate_cost( edge_list, problem : Problem ):
-    solution = Solution()
-
-    solution.node_list.append( edge_list[0].src_id )
-    prev_node = edge_list[1]
-
-    # Because the graph must be a path
-    for edge in edge_list
-
-
-    # for i in range(0, m):
-    #     if solution_id[i]=="1":
-    #         solution.quality += edge_list[i].cost
-            # solution.node_list =
-
-    # return cost
+        problem.LB = np.infty
 
 def generate_solution( edge_list : [ Edge ], node_list : [ Node ], problem : Problem  ):
     solution = Solution()
@@ -122,17 +58,18 @@ def generate_solution( edge_list : [ Edge ], node_list : [ Node ], problem : Pro
     # Traverse the graph to generate path and its cost
     # Traverse along the first edge
     prev = 0
-    next = problem.subgraph.node_edges[0].dest_id
+    next = problem.subgraph.node_edges[0][0].dest_id
     # Add the nodes to the deque
     solution.node_list.append(next)
     solution.node_list.append(0)
+    solution.quality = problem.subgraph.node_edges[0][0].cost
     while len(problem.subgraph.node_edges[next]) == 2 :
         if problem.subgraph.node_edges[next][0].dest_id == prev:
             # The first edge in the next node returns to previous, traverse along second edge
-            e = problem.subgraph.node_edges[prev][1]
+            e = problem.subgraph.node_edges[next][1]
         else:
             # The 2nd edge in the next node returns to previous, traverse along first edge
-            e = problem.subgraph.node_edges[prev][0]
+            e = problem.subgraph.node_edges[next][0]
         prev = next
         next = e.dest_id
         solution.node_list.appendleft(next) # Add the next node to the LEFT SIDE of deque
@@ -140,25 +77,30 @@ def generate_solution( edge_list : [ Edge ], node_list : [ Node ], problem : Pro
 
     # Traverse along the second edge (if applicable)
     prev = 0
-    next = problem.subgraph.node_edges[1].dest_id
     if( len(problem.subgraph.node_edges[prev]) == 2 ):
-        if problem.subgraph.node_edges[next][0].dest_id == prev:
-            # The first edge in the next node returns to previous, traverse along second edge
-            e = problem.subgraph.node_edges[prev][1]
-        else:
-            # The 2nd edge in the next node returns to previous, traverse along first edge
-            e = problem.subgraph.node_edges[prev][0]
-        prev = next
-        next = e.dest_id
-        solution.node_list.append(next) # Add the next node to the RIGHT SIDE of deque
-        solution.quality += e.cost # Add the edge cost to the solution quality
+        next = problem.subgraph.node_edges[0][1].dest_id
+        solution.node_list.append(next)
+        solution.quality += problem.subgraph.node_edges[0][1].cost
+        while len(problem.subgraph.node_edges[next]) == 2:
+            if problem.subgraph.node_edges[next][0].dest_id == prev:
+                # The first edge in the next node returns to previous, traverse along second edge
+                e = problem.subgraph.node_edges[next][1]
+            else:
+                # The 2nd edge in the next node returns to previous, traverse along first edge
+                e = problem.subgraph.node_edges[next][0]
+            prev = next
+            next = e.dest_id
+            solution.node_list.append(next) # Add the next node to the RIGHT SIDE of deque
+            solution.quality += e.cost # Add the edge cost to the solution quality
 
     # Add the final edge between last node and first node
     solution.quality +=  calculate_edge_cost( node_list[solution.node_list[0]], node_list[solution.node_list[-1]] )
 
     return solution
 
-def bnb( nodes , timeout : int ):
+def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
+
+    start_time = time.process_time() # Get start time in seconds
 
     n = len(nodes) # Cache the number of nodes
 
@@ -181,52 +123,106 @@ def bnb( nodes , timeout : int ):
     frontier = []
 
     # Create the root node and added it to frontier
-    root = Problem( 0, UndirectedGraph( nodes ), union_find )
+    root = Problem( int(0), UndirectedGraph( nodes ), 0, union_find, 0 )
     heapq.heappush( frontier,  root)
 
-    best = Solution()
+    # Initialize the solution with a 2MST approximation, so that branches get pruned sooner
+    best = mst_approx( copy.deepcopy(union_find), nodes, edge_list )
+    print("best quality {}".format(best.quality))
+    print("best sequence:\t{}".format(best.node_list))
 
-    # Python version of a do-while loop
+    iter = 0
     while( len(frontier) > 0 ):
+        iter +=1
+        print(iter)
         current = heapq.heappop( frontier ) # Pop queue to get most promising node
 
         e_index = current.index + 1
 
         # Construct subproblem without the next edge
         child_0 = Problem()
+        child_0.subgraph = copy.deepcopy( current.subgraph )
+        child_0.subgraph_cost = current.subgraph_cost
         child_0.index = e_index
         child_0.union_find = copy.deepcopy( current.union_find )
-        child_0.LB = calculate_lb( edge_list, child_0, current.LB )
-        heapq.heappush( frontier, child_0 )
+        calculate_lb( edge_list, child_0 )
+
+        # Check if the answers to subproblem can be better than best answer so far
+        if(  child_0.LB < best.quality ):
+            # Add the subproblem to the frontier
+            heapq.heappush( frontier, child_0 )
+            print("adding child 0 subproblem with lower bound= {}".format(child_0.LB))
+        else:
+            print("pruning non-promising child 0 subproblem")
 
         # Construct subproblem with the next edge
-        e = edge_list[e_index] # Get the edge to add
+        e = edge_list[current.index] # Get the edge to add
         # Check if path condition ( degree of every node < 3 ) will not be violated
         if len(current.subgraph.node_edges[e.src_id]) < 2 and len(current.subgraph.node_edges[e.dest_id]) < 2:
             child_1 = Problem()
+            child_1.subgraph = copy.deepcopy(current.subgraph)
+            child_1.subgraph_cost = current.subgraph_cost
             child_1.union_find = copy.deepcopy(current.union_find)
             u = child_1.union_find.set_list[e.src_id]
             v = child_1.union_find.set_list[e.dest_id]
-            union(u, v)  # Take a union of the sets they belong to
+            # Check if these vertices belong to the same set
+            if u.find() != v.find():
+                union(u, v)  # Take a union of the sets they belong to
+            else: # This edge will create an internal cycle, thus it creates infeasible subproblems
+                print("pruning subproblems with cycle")
+                continue
+            child_1.union_find.n_sets -= 1 # Decrement the number of sets
+
             child_1.subgraph.add_edge(e)
+            child_1.subgraph_cost += e.cost
             if( child_1.union_find.n_sets == 1 ):
                 # This is a fully connected graph with each node degree <=2 i.e. a simple path which is a sol'n
+                new_solution = generate_solution( edge_list, nodes, child_1 )
+                if new_solution.quality < best.quality: # Check if this is the new best solution
+                    best = new_solution # Update best solution found so far
+                    # Write to the tracefile
+                    # tracefile_handle.write("{:.2f},{}".format( [time.process_time()-start_time, best.quality] ) )
+                    tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best.quality ) )
+                    solution_pipe.send( best )
+                    print( "best quality %d".format(best.quality) )
+                    print("best sequence:\t{}".format(best.node_list))
+            else:
+                # This is a new subproblem
+                child_1.index = e_index
+                calculate_lb( edge_list, child_1 )
+                # Check if the answers to subproblem can be better than best answer so far
+                if( child_1.LB < best.quality):
+                    # Add the subproblem to the frontier
+                    heapq.heappush(frontier, child_1)
+                    print("adding child 1 subproblem with lower bound= {}".format(child_1.LB))
+                else:
+                    print( "pruning non-promising child 1 subproblem" )
 
-            child_1.index = e_index
-            child_1.LB = calculate_lb( edge_list, child_1, current.LB )
 
-        # Check if these are leaves
-        if e_index == m:
-            solution = Solution()
-            # Check if child_0 is new best
-
-            # update best solution if better than current best
-
-        # else calculate LB and add to frontier if feasible
-
-
+def run_bnb(nodes , timeout : int ):
+    start_time = time.process_time() # Get current uptime in secconds
+    solution_read, solution_write = Pipe()
+    tracepoint_read, tracepoint_write = Pipe()
 
     trace = Trace()
-    trace.add_tracepoint( 0.234, 5 )
-    trace.add_tracepoint( 2.4545, 89 )
-    return Solution( 0, [ 0, 1, 2 ] ), trace
+
+    # Create a subprocess which will run the algorithm on another core while this process checks time
+    p = Process( target = bnb, args = (nodes, tracepoint_write, solution_write ) )
+    p.start() # Start the process
+    while( time.process_time()-start_time < timeout ):
+        if solution_read.poll(timeout - ( time.process_time() - start_time )) and\
+                tracepoint_read.poll(timeout - ( time.process_time() - start_time )) :
+            # Block until a solution is available or timeout
+            solution = solution_read.recv( )
+
+            # Receive corresponding tracepoint and append
+            trace.tracepoints.append(  tracepoint_read.recv() )
+        else:
+            # Timeout has occured break out of loop
+            break
+
+    p.join(0) # Join the subprocess which automatically closes the pipes
+    if p.is_alive():
+        p.terminate()
+
+    return solution, trace

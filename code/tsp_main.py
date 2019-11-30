@@ -8,6 +8,7 @@ import argparse
 from collections import deque
 
 from tsp_bnb import bnb
+from tsp_bnb import run_bnb
 from tsp_ls1 import ls1
 from tsp_ls2 import ls2
 from tsp_approx import approx
@@ -25,6 +26,11 @@ def write_trace_to_file( output_filepath, trace ):
     with open(output_filepath, 'w', newline='') as csvfile:
         writer = csv.writer( csvfile, delimiter=',' )
         writer.writerows( trace.tracepoints )
+
+def write_trace_to_file( output_filepath, tracepoint_queue ):
+    with open(output_filepath, 'w', newline='') as csvfile:
+        writer = csv.writer( csvfile, delimiter=',' )
+        writer.writerows( trace.tracepoint_queue )
 
 # Script entry point
 if __name__ == '__main__':
@@ -55,25 +61,27 @@ if __name__ == '__main__':
             Nodes.append( Node( next(reader) ) )
 
     if args.alg == 'BnB':
-        solution, trace = bnb( Nodes, args.time )
-    if args.alg == 'LS1':
-        solution, trace = ls1( Nodes, args.time ,args.seed)
-    if args.alg == 'LS2':
-        solution, trace = ls2( Nodes, args.time,args.seed )
-    if args.alg == 'Approx':
-        solution, trace = approx( Nodes, args.time )
-
-    if args.seed != None:
+        solution, trace = run_bnb( Nodes, args.time )
+        output_filename = '{}_{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time)
+    elif args.alg == 'LS1':
         output_filename = '{}_{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time, args.seed)
-    else:
+        solution, trace = ls1( Nodes, args.time ,args.seed)
+    elif args.alg == 'LS2':
+        output_filename = '{}_{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time, args.seed)
+        solution, trace = ls2( Nodes, args.time,args.seed )
+    elif args.alg == 'Approx':
         output_filename = '{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time)
+        solution, trace = approx( Nodes, args.time )
 
     code_dir = Path(getsourcefile(lambda: 0)).parent # Get absolute path to this script and remove filename
     top_dir = code_dir.parent # Get parent directory to where the executable resides
     output_dir =  top_dir / 'output' # Construct path to output directory
     Path.mkdir(output_dir, exist_ok=True) # Make the directory if it doesn't already exist
 
-    write_solution_to_file(  ( output_dir / output_filename ).with_suffix('.sol') , solution )
-    write_trace_to_file( ( output_dir / output_filename ).with_suffix('.trace') , trace )
+    output_solution_filepath = ( output_dir / output_filename ).with_suffix('.sol')
+    output_trace_filepath = ( output_dir / output_filename ).with_suffix('.trace')
+
+    write_solution_to_file(  output_solution_filepath , solution )
+    write_trace_to_file( output_trace_filepath, trace )
 
     exit( 0 )
