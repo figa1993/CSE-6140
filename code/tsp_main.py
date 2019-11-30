@@ -42,7 +42,7 @@ if __name__ == '__main__':
     if (args.alg == 'LS1' or args.alg == 'LS2' ) and args.seed == None:
         sys.exit( "Usage: {}\t-seed parameter must be provided for -alg={}".format( parser.prog, args.alg ) )
 
-    Nodes = deque()
+    Nodes = []
 
     with open( args.inst, newline='' ) as csvfile:
         reader = csv.reader( csvfile, delimiter=' ' )
