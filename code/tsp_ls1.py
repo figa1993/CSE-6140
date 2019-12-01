@@ -2,10 +2,13 @@ from tsp_types import Solution
 from tsp_types import Trace
 from tsp_types import Node
 from tsp_types import Edge
+from tsp_types import Tracepoint
 import random
 import numpy as np
 import math
 import time
+from multiprocessing import Process, Pipe, Queue
+
 
 def distance_calculator(nodes):
     num_locs = len(nodes)
@@ -57,20 +60,32 @@ def calculate_route_cost(route,cost_matrix):
     return cost
 
 
-def two_opt(route_matrix,dist_matrix,cost):
-    bestroute = route_matrix
-    improvement = False
-    # TODO: This loop does not consider flips which include endpoints
-    for i in range(1,len(route_matrix)-1):
-        for k in range(i+i,len(route_matrix)):
-            improved_route = route_matrix[:]
-            improved_route[i:k] = route_matrix[k-1:i-1:-1] #Here we will take the section to flip and flip it and replace the order.
-            new_cost = calculate_route_cost(improved_route,dist_matrix)
-            if new_cost < calculate_route_cost(bestroute,dist_matrix):
-                bestroute = improved_route
-                improvement = True
-    route_matrix = bestroute
-    return improvement, route_matrix, calculate_route_cost(route_matrix,dist_matrix)
+def two_opt(dist_matrix,nodes,start_nodes,tracepoint_pipe : Pipe, solution_pipe : Pipe):
+    initial = 1
+    start_time = time.process_time()
+    while 1:
+        for x in start_nodes:
+            mat = distance_calculator(nodes)
+            greedy_route,greedy_total_cost = greedy_heuristic(mat,x)
+            route_matrix = greedy_route
+            if initial == 1:
+                bestroute = greedy_route
+                bestcost = greedy_total_cost
+                initial = 0
+            #improvement = False
+            # TODO: This loop does not consider flips which include endpoints
+            for i in range(1,len(route_matrix)-1):
+                for k in range(i+i,len(route_matrix)):
+                    improved_route = route_matrix[:]
+                    improved_route[i:k] = route_matrix[k-1:i-1:-1] #Here we will take the section to flip and flip it and replace the order.
+                    new_cost = calculate_route_cost(improved_route,dist_matrix)
+                    if new_cost < bestcost:
+                        print("Improvement by 2opt made")
+                        bestroute = improved_route
+                        bestcost = new_cost
+                        solution_pipe.send(Solution( bestcost, bestroute))
+                        tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, bestcost ) )
+            route_matrix = bestroute
 
 def printmat(mat):
     for i in range(0,len(mat)):
@@ -79,48 +94,37 @@ def printmat(mat):
         print()    
 
 def ls1( nodes , timeout : int,seed_num ):
+    start_time = time.time()
+    solution_read, solution_write = Pipe()
+    tracepoint_read, tracepoint_write = Pipe()
     random.seed(seed_num)
-    top_cost = np.inf
-    top_route = []
     trace = Trace()
-    starttime = time.time()
     mat = distance_calculator(nodes)
     start_nodes = []
     for i in range(0,len(nodes)):
         start_nodes.append(i)
     random.shuffle(start_nodes)
 
-    for x in start_nodes:
-        # TODO: Make a deepcopy of the matrix and pass it in on line 97, that way you won't have to recalc at line 105
-        route,total_cost = greedy_heuristic(mat,x)
-        if total_cost < top_cost:
-            top_cost = total_cost
-            top_route = route
-            trace.add_tracepoint(time.time() - starttime,total_cost)
-        #print(route,total_cost)
-        #trace.add_tracepoint(time.time() - starttime,total_cost)
-        improving = True
-        mat = distance_calculator(nodes)
-        if time.time()-starttime > timeout:
-            # TODO: is it sufficient just to return the solution? if greedy_heuristic returned a better total_cost
-            # a trace was already added in line 101 and top_cost was updated so the condition on next line is always 0?
-            if total_cost < top_cost:
-                trace.add_tracepoint(time.time() - starttime,total_cost)
-                return Solution( total_cost, top_route), trace
-            else:
-                return Solution(top_cost, top_route), trace
-        while improving:
-            if time.time()-starttime > timeout:
-                if total_cost < top_cost:
-                    trace.add_tracepoint(time.time() - starttime,total_cost)
-                    return Solution( total_cost, route), trace
-                else:
-                    return Solution(top_cost, top_route), trace      
-            improving, route, total_cost = two_opt(route,mat,total_cost)
-            if total_cost < top_cost:
-                top_cost = total_cost
-                top_route = route
-                trace.add_tracepoint(time.time() - starttime,total_cost)              #print(route,total_cost)
+    p = Process( target = two_opt, args = (mat,nodes,start_nodes,tracepoint_write, solution_write ) ) 
+    p.start() # Start the process
+    while( time.time()-start_time < timeout ):
+        if solution_read.poll(timeout - ( time.time() - start_time )) and\
+                tracepoint_read.poll(timeout - ( time.time() - start_time )) :
+            # Block until a solution is available or timeout
+            solution = solution_read.recv( )
+            
+            # Receive corresponding tracepoint and append
+            tracepoint = tracepoint_read.recv()
+            trace.add_tracepoint(float(tracepoint.time),tracepoint.quality)
+            print("New Best Value of",tracepoint.quality,"found")
+            print("Time Elapsed: ",time.time()-start_time)
+        else:
+            # Timeout has occured break out of loop
+            break
+    p.join(0)
+    print("Algorithm Finished in",time.time()-start_time,"seconds")
+    p.terminate()
+    #print(route,total_cost)
     # TODO: can the return on the next line actually ever be hit?
-    return Solution( top_cost, top_route), trace
+    return solution, trace
 

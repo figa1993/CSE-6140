@@ -75,50 +75,47 @@ def accep_criteria(neighbor_route,current_route,cost_matrix,temperature):
             return neighbor_route,calculate_route_cost(neighbor_route,cost_matrix)
     return current_route,current_route_cost
     
-def anneal_route(nodes,start_nodes,initial_T,ending_T,cost_matrix, tracepoint_pipe : Pipe, solution_pipe : Pipe,completion_pipe : Pipe):
+def anneal_route(nodes,start_nodes,initial_T,ending_T,cost_matrix, tracepoint_pipe : Pipe, solution_pipe : Pipe):
     start_time = time.process_time()
-    a = .95 #cooling constant
+    a = .995 #cooling constant
     initial = 1
-    for x in start_nodes:
-        temperature = initial_T
-        mat = distance_calculator(nodes)
-        greedy_route,greedy_total_cost = greedy_heuristic(mat,x)
-        if initial == 1:
-            best_route = greedy_route
-            best_cost = greedy_total_cost
-        initial = 0
-        num_cities = len(greedy_route)-1
-        current_route = greedy_route
-        while temperature >= ending_T:
-            adder_rand = random.randint(2,num_cities-1)
-            left_rand = random.randint(1,num_cities-adder_rand)
-            neighbor_route = current_route[:]
-            neighbor_route[left_rand:(left_rand + adder_rand)] = reversed(neighbor_route[left_rand:(left_rand + adder_rand)])
-            current_route,current_cost = accep_criteria(neighbor_route,current_route,cost_matrix,temperature)
-            if current_cost < best_cost:
-                best_cost = current_cost
-                best_route = current_route
-                solution_pipe.send(Solution( best_cost, best_route))
-                tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best_cost ) )
-                completion_pipe.send(0)
-            if current_cost-best_cost > best_cost*.3:
+    while 1:
+        for x in start_nodes:
+            temperature = initial_T
+            mat = distance_calculator(nodes)
+            greedy_route,greedy_total_cost = greedy_heuristic(mat,x)
+            if initial == 1:
                 best_route = greedy_route
                 best_cost = greedy_total_cost
-                temperature = initial_T
-            temperature = temperature*a
-        solution_pipe.send(Solution( best_cost, best_route))
-        tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best_cost ) )
-        completion_pipe.send(0)
-    completion_pipe.send(1)
+                initial = 0
+            num_cities = len(greedy_route)-1
+            current_route = greedy_route
+            while temperature >= ending_T:
+                adder_rand = random.randint(2,num_cities-1)
+                left_rand = random.randint(1,num_cities-adder_rand)
+                neighbor_route = current_route[:]
+                neighbor_route[left_rand:(left_rand + adder_rand)] = reversed(neighbor_route[left_rand:(left_rand + adder_rand)])
+                current_route,current_cost = accep_criteria(neighbor_route,current_route,cost_matrix,temperature)
+                if current_cost < best_cost:
+                    best_cost = current_cost
+                    best_route = current_route
+                    print("Optimal Updated by Annealing")
+                    solution_pipe.send(Solution( best_cost, best_route))
+                    tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best_cost ) )
+                if  current_cost-best_cost > best_cost*.5:
+                    print("Resetting Annealing")
+                    current_route = greedy_route
+                    current_cost = greedy_total_cost
+                    temperature = initial_T
+                temperature = temperature*a
     solution_pipe.send(Solution( best_cost, best_route))
     tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best_cost ) )
     
 
 def ls2( nodes , timeout : int,seed_num ): #Here we will implement the Simulated Annealing Algorithm
-    start_time = time.process_time() # Get current uptime in secconds
+    start_time = time.time()# Get current uptime in secconds
     solution_read, solution_write = Pipe()
     tracepoint_read, tracepoint_write = Pipe()
-    completion_read, completion_write = Pipe()
     random.seed(seed_num)
     ending_temp = random.random()
     initial_temp = random.randrange(len(nodes))
@@ -128,24 +125,25 @@ def ls2( nodes , timeout : int,seed_num ): #Here we will implement the Simulated
     for i in range(0,len(nodes)):
         start_nodes.append(i)
     random.shuffle(start_nodes) 
-    p = Process( target = anneal_route, args = (nodes,start_nodes,initial_temp,ending_temp,mat,tracepoint_write, solution_write,completion_write ) ) 
+    p = Process( target = anneal_route, args = (nodes,start_nodes,initial_temp,ending_temp,mat,tracepoint_write, solution_write ) ) 
     p.start() # Start the process
-    while( time.process_time()-start_time < timeout ):
-        if solution_read.poll(timeout - ( time.process_time() - start_time )) and\
-                tracepoint_read.poll(timeout - ( time.process_time() - start_time )) :
+    while( time.time()-start_time < timeout ):
+        if solution_read.poll(timeout - ( time.time() - start_time )) and\
+                tracepoint_read.poll(timeout - ( time.time() - start_time )) :
             # Block until a solution is available or timeout
-            completionvalue = completion_read.recv()
-            if completionvalue == 1:
-                break
             solution = solution_read.recv( )
             
             # Receive corresponding tracepoint and append
             tracepoint = tracepoint_read.recv()
             trace.add_tracepoint(float(tracepoint.time),tracepoint.quality)
+            print("New Best Value of",tracepoint.quality,"found")
+            print("Time Elapsed: ",time.time()-start_time)
         else:
             # Timeout has occured break out of loop
             break
     p.join(0)
+    print("Algorithm Finished in",time.time()-start_time,"seconds")
+    p.terminate()
     #greedyroute,greedytotal_cost = greedy_heuristic(mat,0)
     #route, total_cost = anneal_route(greedyroute,greedytotal_cost,initial_temp,ending_temp,mat)
     return solution, trace
