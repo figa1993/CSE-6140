@@ -1,8 +1,41 @@
-from tsp_bnb import UnionFindSet
-from tsp_bnb import union
 from tsp_types import Node
 from tsp_types import Edge
 import bisect
+
+class UnionFindSet:
+    __slots__='rank','parent'
+
+    def __init__(self, node : Node ):
+        self.rank = 0
+        self.parent = self
+
+    def find(self):
+        if self.parent != self:
+            self.parent = self.parent.find()
+        return self.parent
+
+def union( x : UnionFindSet, y : UnionFindSet ):
+    x_root = x.find()
+    y_root = y.find()
+    if x_root == y_root:
+        return
+
+    if x_root.rank == y_root.rank:
+        y_root.parent = x_root
+        x_root.rank += 1
+    elif x_root.rank > y_root.rank:
+        y_root.parent = x_root
+    else:
+        x_root.parent = y_root
+
+class UnionFind:
+    __slots__ = 'n_sets', 'set_list'
+    def __init__(self):
+        self.n_sets = 0
+        self.set_list = []
+    def add_set(self, set : UnionFindSet):
+        self.n_sets += 1
+        self.set_list.append( set )
 
 if __name__ == '__main__':
     nodes = []

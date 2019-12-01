@@ -12,7 +12,7 @@ class Node:
 
 def calculate_edge_cost( src : Node, dest : Node ):
     cost = Decimal(np.sqrt((src.x - dest.x) ** 2 + (src.y - dest.y) ** 2))
-    cost = int(cost.quantize(0, rounding=ROUND_HALF_UP))  # Round distance to integer such that 0.5 rounds up
+    return int(cost.quantize(0, rounding=ROUND_HALF_UP))  # Round distance to integer such that 0.5 rounds up
 
 
 class Edge:
@@ -21,7 +21,7 @@ class Edge:
         self.src_id = source_node.id
         self.dest_id = dest_node.id
         # Calculate cost of the edge as euclidian distance
-        self.cost = calculate_edge_cost( source_node.id, dest_node.id )
+        self.cost = calculate_edge_cost( source_node, dest_node )
 
     def __lt__(self, other):
         return self.cost < other.cost
@@ -35,7 +35,9 @@ class OutgoingEdge:
 class UndirectedGraph:
     __slots__ = 'node_edges'
     def __init__(self , nodes : [Node]):
-        self.node_edges = []*len(nodes) # For each node create a list to store edges
+        self.node_edges=list()
+        for node in nodes:
+            self.node_edges.append(list()) # For each node create a list to store edges
     def add_edge(self, e: Edge  ):
         self.node_edges[e.src_id].append( OutgoingEdge( e.dest_id, e.cost ) )
         self.node_edges[e.dest_id].append(  OutgoingEdge(e.src_id, e.cost ) )
@@ -45,13 +47,18 @@ class Solution:
     __slots__ = 'quality', 'node_list'
 
     # Default constructor
-    def __init__(self):
-        self.quality = 0
+    def __init__(self, in_quality = np.infty ):
+        self.quality = in_quality
         self.node_list = deque()
 
-    def __init__(self, in_quality, in_node_list ):
-        self.quality = in_quality
-        self.node_list = in_node_list # Shallow copy
+class Tracepoint:
+    __slots__ = 'time', 'quality'
+    def __init__(self, time : float, quality : int):
+        self.time = '%.2f'%time
+        self.quality = quality
+    # def __str__(self):
+    #     s = "{},{}".format(self.time, self.quality)
+    #     return s
 
 class Trace:
     __slots__ = 'tracepoints'
@@ -59,6 +66,6 @@ class Trace:
     def __init__(self):
         self.tracepoints = []
 
-    def add_tracepoint( self, time : float, quality : int ):
-        self.tracepoints.append( [ '%.2f'%time, quality ] )
+    def add_tracepoint( self,  tracepoint : Tracepoint ):
+        self.tracepoints.append( [ tracepoint.time, tracepoint.quality ] )
 
