@@ -20,11 +20,11 @@ def distance_calculator(nodes):
                 mat[x,y].cost = np.inf
     return mat
 
-def get_min_cost(dest_group):
+def get_min_cost(dest_group,rem_nodes):
     min_cost = np.inf
     min_index = np.inf
     for i in range (0,dest_group.shape[0]):
-        if dest_group[i].cost < min_cost:
+        if (dest_group[i].cost < min_cost) and rem_nodes[i] == 1:
             min_cost = dest_group[i].cost
             min_index = i
     return min_cost, min_index
@@ -39,16 +39,11 @@ def greedy_heuristic(dist_matrix,index_start):
     rem_nodes[start_index] = 0
     route.append(start_index)
     while rem_nodes.any(): #while there are still unused locations
-        dist,next_hop = get_min_cost(dist_matrix[start_index,])
-        if rem_nodes[next_hop] == 1:
-            route.append(next_hop)
-            start_index = next_hop
-            rem_nodes[next_hop] = 0
-            total_cost += dist
-        else:
-            # TODO: instead, pass a list of flags into get_min_cost indicating which nodes have not been visited
-            # and perform a single linear search which finds node s.t. cost is minimal AND it has not been visited
-            dist_matrix[start_index,next_hop].cost = np.inf
+        dist,next_hop = get_min_cost(dist_matrix[start_index,],rem_nodes)
+        route.append(next_hop)
+        start_index = next_hop
+        rem_nodes[next_hop] = 0
+        total_cost += dist
     total_cost += initialdist_matrix[route[len(route)-1],route[0]].cost
     route.append(route[0])
     return route,total_cost
@@ -63,17 +58,15 @@ def calculate_route_cost(route,cost_matrix):
 def two_opt(dist_matrix,nodes,start_nodes,tracepoint_pipe : Pipe, solution_pipe : Pipe):
     initial = 1
     start_time = time.process_time()
+    mat = distance_calculator(nodes)
     while 1:
         for x in start_nodes:
-            mat = distance_calculator(nodes)
             greedy_route,greedy_total_cost = greedy_heuristic(mat,x)
             route_matrix = greedy_route
             if initial == 1:
                 bestroute = greedy_route
                 bestcost = greedy_total_cost
                 initial = 0
-            #improvement = False
-            # TODO: This loop does not consider flips which include endpoints
             for i in range(1,len(route_matrix)-1):
                 for k in range(i+i,len(route_matrix)):
                     improved_route = route_matrix[:]
@@ -124,7 +117,5 @@ def ls1( nodes , timeout : int,seed_num ):
     p.join(0)
     print("Algorithm Finished in",time.time()-start_time,"seconds")
     p.terminate()
-    #print(route,total_cost)
-    # TODO: can the return on the next line actually ever be hit?
     return solution, trace
 
