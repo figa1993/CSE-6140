@@ -4,9 +4,13 @@ from tsp_types import Edge
 from tsp_types import Node
 from tsp_types import UndirectedGraph
 from tsp_types import calculate_edge_cost
+from tsp_types import Tracepoint
 from UnionFind import UnionFindSet, UnionFind, union
 
 from collections import deque
+from multiprocessing import Process, Pipe
+import time
+import bisect
 
 class DfsStackElement:
     __slots__ = 'node_id','outbound_edge_index'
@@ -74,5 +78,55 @@ def mst_approx( union_find : UnionFind, nodes : [Node],edges : [Edge] ):
 
 
 
-def approx( nodes , timeout : int ):
-    return
+def approx( nodes , tracepoint_pipe : Pipe, solution_pipe : Pipe ):
+
+    start_time = time.process_time()  # Get start time in seconds
+
+    n = len(nodes)  # Cache the number of nodes
+
+    # Construct a list of edges sorted by cost
+    edge_list = []
+    for i in range(n):
+        for j in range(i + 1, n):
+            # Construct an edge
+            e = Edge(nodes[i], nodes[j])
+            bisect.insort(edge_list, e)
+
+    m = len(edge_list)  # Cache the number of edges
+
+    union_find = UnionFind()
+    for i in range(n):
+        set = UnionFindSet(nodes[i])
+        union_find.add_set(set)
+
+    solution = mst_approx( union_find, nodes, edge_list )
+    solution_pipe.send( solution )
+    tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, solution.quality ) )
+
+    exit( 0 ) # Exit the process
+
+def run_approx( nodes , timeout : int ):
+    start_time = time.process_time() # Get current uptime in secconds
+    solution_read, solution_write = Pipe()
+    tracepoint_read, tracepoint_write = Pipe()
+
+    trace = Trace()
+
+    # Create a subprocess which will run the algorithm on another core while this process checks time
+    p = Process( target = approx, args = ( nodes, tracepoint_write, solution_write ) )
+    p.start() # Start the process
+
+    # Have the thread spin so that it keeps track of time most accurately
+    while( ( time.process_time()-start_time ) < timeout and p.is_alive() ):
+        if solution_read.poll( 0 ) and tracepoint_read.poll( 0 ):
+            # Block until a solution is available or timeout
+            solution = solution_read.recv( )
+
+            # Receive corresponding tracepoint and append
+            trace.add_tracepoint( tracepoint_read.recv() )
+
+    p.join( 0 ) # Join the subprocess which automatically closes the pipes
+    if p.is_alive():
+        p.terminate()
+
+    return solution, trace

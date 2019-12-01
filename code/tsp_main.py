@@ -1,20 +1,17 @@
 from inspect import getsourcefile
-import os
 from pathlib import Path
 import sys
 import csv
-import numpy as np
 import argparse
-from collections import deque
 
-from tsp_bnb import bnb
 from tsp_bnb import run_bnb
 from tsp_ls1 import ls1
 from tsp_ls2 import ls2
-from tsp_approx import approx
+from tsp_approx import run_approx
 
 from tsp_types import Node
 from tsp_types import Solution
+from tsp_types import Trace
 
 def write_solution_to_file( output_filepath, solution : Solution ):
     with open( output_filepath, 'w', newline='' ) as csvfile:
@@ -22,15 +19,10 @@ def write_solution_to_file( output_filepath, solution : Solution ):
         writer.writerow( [solution.quality] )
         writer.writerow( solution.node_list )
 
-def write_trace_to_file( output_filepath, trace ):
+def write_trace_to_file( output_filepath, trace : Trace ):
     with open(output_filepath, 'w', newline='') as csvfile:
         writer = csv.writer( csvfile, delimiter=',' )
         writer.writerows( trace.tracepoints )
-
-def write_trace_to_file( output_filepath, tracepoint_queue ):
-    with open(output_filepath, 'w', newline='') as csvfile:
-        writer = csv.writer( csvfile, delimiter=',' )
-        writer.writerows( trace.tracepoint_queue )
 
 # Script entry point
 if __name__ == '__main__':
@@ -62,7 +54,7 @@ if __name__ == '__main__':
 
     if args.alg == 'BnB':
         solution, trace = run_bnb( Nodes, args.time )
-        output_filename = '{}_{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time)
+        output_filename = '{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time)
     elif args.alg == 'LS1':
         output_filename = '{}_{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time, args.seed)
         solution, trace = ls1( Nodes, args.time ,args.seed)
@@ -71,7 +63,7 @@ if __name__ == '__main__':
         solution, trace = ls2( Nodes, args.time,args.seed )
     elif args.alg == 'Approx':
         output_filename = '{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time)
-        solution, trace = approx( Nodes, args.time )
+        solution, trace = run_approx( Nodes, args.time )
 
     code_dir = Path(getsourcefile(lambda: 0)).parent # Get absolute path to this script and remove filename
     top_dir = code_dir.parent # Get parent directory to where the executable resides

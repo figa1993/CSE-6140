@@ -56,8 +56,9 @@ class Tracepoint:
     def __init__(self, time : float, quality : int):
         self.time = '%.2f'%time
         self.quality = quality
-    def __str__(self):
-        s = "{},{}".format([self.time, self.quality])
+    # def __str__(self):
+    #     s = "{},{}".format(self.time, self.quality)
+    #     return s
 
 class Trace:
     __slots__ = 'tracepoints'
@@ -65,9 +66,6 @@ class Trace:
     def __init__(self):
         self.tracepoints = []
 
-    # def __init__(self, tracepoint_list : [Tracepoint]):
-    #     self.tracepoints = tracepoint_list # Copy reference to the list of tracepoints
-
-    def add_tracepoint( self, time : float, quality : int ):
-        self.tracepoints.append( [ '%.2f'%time, quality ] )
+    def add_tracepoint( self,  tracepoint : Tracepoint ):
+        self.tracepoints.append( [ tracepoint.time, tracepoint.quality ] )
 

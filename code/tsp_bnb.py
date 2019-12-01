@@ -9,7 +9,7 @@ from tsp_types import Trace
 from UnionFind import UnionFindSet, UnionFind, union
 from tsp_approx import mst_approx
 
-from multiprocessing import Process, Pipe, Queue
+from multiprocessing import Process, Pipe
 import bisect
 import heapq
 import numpy as np
@@ -197,6 +197,7 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
                     print("adding child 1 subproblem with lower bound= {}".format(child_1.LB))
                 else:
                     print( "pruning non-promising child 1 subproblem" )
+    exit( 0 )
 
 
 def run_bnb(nodes , timeout : int ):
@@ -209,19 +210,17 @@ def run_bnb(nodes , timeout : int ):
     # Create a subprocess which will run the algorithm on another core while this process checks time
     p = Process( target = bnb, args = (nodes, tracepoint_write, solution_write ) )
     p.start() # Start the process
-    while( time.process_time()-start_time < timeout ):
-        if solution_read.poll(timeout - ( time.process_time() - start_time )) and\
-                tracepoint_read.poll(timeout - ( time.process_time() - start_time )) :
+
+    # Have the thread spin so that it keeps track of time most accurately
+    while( ( time.process_time()-start_time ) < timeout and p.is_alive() ):
+        if solution_read.poll( 0 ) and tracepoint_read.poll( 0 ):
             # Block until a solution is available or timeout
             solution = solution_read.recv( )
 
             # Receive corresponding tracepoint and append
-            trace.tracepoints.append(  tracepoint_read.recv() )
-        else:
-            # Timeout has occured break out of loop
-            break
+            trace.add_tracepoint( tracepoint_read.recv() )
 
-    p.join(0) # Join the subprocess which automatically closes the pipes
+    p.join( 0 ) # Join the subprocess which automatically closes the pipes
     if p.is_alive():
         p.terminate()
 
