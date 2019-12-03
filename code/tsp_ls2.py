@@ -7,6 +7,7 @@ import random
 import numpy as np
 import math
 import time
+import copy
 from multiprocessing import Process, Pipe, Queue
 
 def distance_calculator(nodes):
@@ -43,7 +44,7 @@ def printmat(mat):
 #This will solve a greedy problem to give us a place to start
 def greedy_heuristic(dist_matrix,index_start):
     initialdist_matrix = dist_matrix
-    start_index = index_start#random.randint(0,dist_matrix.shape[0]-1)
+    start_index = index_start #random.randint(0,dist_matrix.shape[0]-1)
     total_cost = 0
     route = []
     rem_nodes = np.ones(dist_matrix.shape[0])
@@ -75,6 +76,7 @@ def anneal_route(nodes,start_nodes,initial_T,ending_T,cost_matrix, tracepoint_pi
     a = .995 #cooling constant
     mat = distance_calculator(nodes)
     initial = 1
+
     while 1:
         for x in start_nodes:
             temperature = initial_T
@@ -94,21 +96,29 @@ def anneal_route(nodes,start_nodes,initial_T,ending_T,cost_matrix, tracepoint_pi
                 if current_cost < best_cost:
                     best_cost = current_cost
                     best_route = current_route
-                    print("Optimal Updated by Annealing")
-                    solution_pipe.send(Solution( best_cost, best_route))
+                    # print("Optimal Updated by Annealing")
+
+                    # Construct a solution and send it to output pipe
+                    solution = Solution( best_cost )
+                    for node in best_route:
+                        solution.node_list.append( copy.deepcopy(node) )
+                    solution_pipe.send( solution )
+
                     tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best_cost ) )
                 if  current_cost-best_cost > best_cost*.5:
-                    print("Resetting Annealing")
+                    # print("Resetting Annealing")
                     current_route = greedy_route
                     current_cost = greedy_total_cost
                     temperature = initial_T
                 temperature = temperature*a
     solution_pipe.send(Solution( best_cost, best_route))
     tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best_cost ) )
+
+    exit( 0 )
     
 
 def ls2( nodes , timeout : int,seed_num ): #Here we will implement the Simulated Annealing Algorithm
-    start_time = time.time()# Get current uptime in secconds
+    start_time = time.process_time()# Get current uptime in secconds
     solution_read, solution_write = Pipe()
     tracepoint_read, tracepoint_write = Pipe()
     random.seed(seed_num)
@@ -122,32 +132,16 @@ def ls2( nodes , timeout : int,seed_num ): #Here we will implement the Simulated
     random.shuffle(start_nodes) 
     p = Process( target = anneal_route, args = (nodes,start_nodes,initial_temp,ending_temp,mat,tracepoint_write, solution_write ) ) 
     p.start() # Start the process
-    while( time.time()-start_time < timeout ):
-        if solution_read.poll(timeout - ( time.time() - start_time )) and\
-                tracepoint_read.poll(timeout - ( time.time() - start_time )) :
-            # Block until a solution is available or timeout
-            solution = solution_read.recv( )
-            
-            # Receive corresponding tracepoint and append
-            tracepoint = tracepoint_read.recv()
-            trace.add_tracepoint(float(tracepoint.time),tracepoint.quality)
-            print("New Best Value of",tracepoint.quality,"found")
-            print("Time Elapsed: ",time.time()-start_time)
-        else:
-            # Timeout has occured break out of loop
-            break
-    p.join(0)
-    print("Algorithm Finished in",time.time()-start_time,"seconds")
-    p.terminate()
-    #greedyroute,greedytotal_cost = greedy_heuristic(mat,0)
-    #route, total_cost = anneal_route(greedyroute,greedytotal_cost,initial_temp,ending_temp,mat)
+
+    # Have the thread spin so that it keeps track of time most accurately
+    while( ( time.process_time()-start_time ) < timeout and p.is_alive() ):
+        if solution_read.poll( 0 ) and tracepoint_read.poll( 0 ):
+            # Blocking call which shouldn't block since poll conditions ensure data is available
+            solution = solution_read.recv()
+            trace.add_tracepoint( tracepoint_read.recv() ) # Receive corresponding tracepoint and append
+
+    p.join( 0 ) # Join the subprocess which automatically closes the pipes
+    if p.is_alive():
+        p.terminate()
+
     return solution, trace
-
-
-
-
-
-
-
-        
-        
