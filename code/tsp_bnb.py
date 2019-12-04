@@ -128,13 +128,13 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
 
     # Initialize the solution with a 2MST approximation, so that branches get pruned sooner
     best = mst_approx( copy.deepcopy(union_find), nodes, edge_list )
-    print("best quality {}".format(best.quality))
-    print("best sequence:\t{}".format(best.node_list))
+    # Send the initial solution to output
+    tracepoint_pipe.send( Tracepoint(time.process_time() - start_time, best.quality) )
+    solution_pipe.send( best )
+    # print("best quality {}".format(best.quality))
+    # print("best sequence:\t{}".format(best.node_list))
 
-    iter = 0
     while( len(frontier) > 0 ):
-        iter +=1
-        print(iter)
         current = heapq.heappop( frontier ) # Pop queue to get most promising node
 
         e_index = current.index + 1
@@ -151,9 +151,9 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
         if(  child_0.LB < best.quality ):
             # Add the subproblem to the frontier
             heapq.heappush( frontier, child_0 )
-            print("adding child 0 subproblem with lower bound= {}".format(child_0.LB))
-        else:
-            print("pruning non-promising child 0 subproblem")
+            # print("adding child 0 subproblem with lower bound= {}".format(child_0.LB))
+        # else:
+            # print("pruning non-promising child 0 subproblem")
 
         # Construct subproblem with the next edge
         e = edge_list[current.index] # Get the edge to add
@@ -169,7 +169,7 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
             if u.find() != v.find():
                 union(u, v)  # Take a union of the sets they belong to
             else: # This edge will create an internal cycle, thus it creates infeasible subproblems
-                print("pruning subproblems with cycle")
+                # print("pruning subproblems with cycle")
                 continue
             child_1.union_find.n_sets -= 1 # Decrement the number of sets
 
@@ -184,8 +184,8 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
                     # tracefile_handle.write("{:.2f},{}".format( [time.process_time()-start_time, best.quality] ) )
                     tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best.quality ) )
                     solution_pipe.send( best )
-                    print( "best quality %d".format(best.quality) )
-                    print("best sequence:\t{}".format(best.node_list))
+                    # print( "best quality %d".format(best.quality) )
+                    # print("best sequence:\t{}".format(best.node_list))
             else:
                 # This is a new subproblem
                 child_1.index = e_index
@@ -194,9 +194,9 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
                 if( child_1.LB < best.quality):
                     # Add the subproblem to the frontier
                     heapq.heappush(frontier, child_1)
-                    print("adding child 1 subproblem with lower bound= {}".format(child_1.LB))
-                else:
-                    print( "pruning non-promising child 1 subproblem" )
+                    # print("adding child 1 subproblem with lower bound= {}".format(child_1.LB))
+                # else:
+                    # print( "pruning non-promising child 1 subproblem" )
     exit( 0 )
 
 

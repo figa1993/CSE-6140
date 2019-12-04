@@ -21,7 +21,7 @@ class Edge:
         self.src_id = source_node.id
         self.dest_id = dest_node.id
         # Calculate cost of the edge as euclidian distance
-        self.cost = calculate_edge_cost( source_node, dest_node )
+        self.cost = calculate_edge_cost( source_node, dest_node)
 
     def __lt__(self, other):
         return self.cost < other.cost
@@ -50,7 +50,7 @@ class Solution:
     def __init__(self, in_quality = np.infty ):
         self.quality = in_quality
         self.node_list = deque()
-
+        
 class Tracepoint:
     __slots__ = 'time', 'quality'
     def __init__(self, time : float, quality : int):

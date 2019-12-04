@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # Run each algorithm on each input file
     for input_filepath in input_filepaths:
         for alg  in alg_list:
-            args = [ 'python', str(code_dir / 'tsp_main.py'), '-inst', input_filepath, '-alg', alg, '-time', '600', '-seed', '6140']
+            args = [ 'python', str(code_dir / 'tsp_main.py'), '-inst', input_filepath, '-alg', alg, '-time', '10', '-seed', '6140']
             p = subprocess.Popen( args )
             p.wait( 20 ) # Wait for the process to finish before moving on
 
