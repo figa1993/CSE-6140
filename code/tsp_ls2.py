@@ -3,6 +3,7 @@ from tsp_types import Trace
 from tsp_types import Node
 from tsp_types import Edge
 from tsp_types import Tracepoint
+from tsp_ls1 import greedy_heuristic
 import random
 import numpy as np
 import math
@@ -40,29 +41,10 @@ def printmat(mat):
         for j in range(0,len(mat)):
             print(mat[i,j].cost, end =" ")  
         print()   
+  
 
-#This will solve a greedy problem to give us a place to start
-def greedy_heuristic(dist_matrix,index_start):
-    initialdist_matrix = dist_matrix
-    start_index = index_start #random.randint(0,dist_matrix.shape[0]-1)
-    total_cost = 0
-    route = []
-    rem_nodes = np.ones(dist_matrix.shape[0])
-    rem_nodes[start_index] = 0
-    route.append(start_index)
-    while rem_nodes.any(): #while there are still unused locations
-        dist,next_hop = get_min_cost(dist_matrix[start_index,],rem_nodes)
-        route.append(next_hop)
-        start_index = next_hop
-        rem_nodes[next_hop] = 0
-        total_cost += dist
-    total_cost += initialdist_matrix[route[len(route)-1],route[0]].cost
-    route.append(route[0])
-    return route,total_cost    
-
-def accep_criteria(neighbor_route,current_route,cost_matrix,temperature):
+def accep_criteria(neighbor_route,current_route,cost_matrix,temperature,current_route_cost):
     neighbor_route_cost = calculate_route_cost(neighbor_route,cost_matrix)
-    current_route_cost = calculate_route_cost(current_route,cost_matrix)
     if neighbor_route_cost < current_route_cost:
         return neighbor_route,calculate_route_cost(neighbor_route,cost_matrix)
     else:
@@ -71,28 +53,31 @@ def accep_criteria(neighbor_route,current_route,cost_matrix,temperature):
             return neighbor_route,calculate_route_cost(neighbor_route,cost_matrix)
     return current_route,current_route_cost
     
-def anneal_route(nodes,start_nodes,initial_T,ending_T,cost_matrix, tracepoint_pipe : Pipe, solution_pipe : Pipe):
+def anneal_route(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe):
+    cost_matrix = distance_calculator(nodes)
+    ending_T = random.random()
+    initial_T = random.randrange(len(nodes))
+    start_nodes = []
+    for i in range(0,len(nodes)):
+        start_nodes.append(i)
+    random.shuffle(start_nodes) 
     start_time = time.process_time()
     a = .995 #cooling constant
-    mat = distance_calculator(nodes)
-    initial = 1
-
+    best_route = None
+    best_cost = np.inf
     while 1:
         for x in start_nodes:
             temperature = initial_T
-            greedy_route,greedy_total_cost = greedy_heuristic(mat,x)
-            if initial == 1:
-                best_route = greedy_route
-                best_cost = greedy_total_cost
-                initial = 0
+            greedy_route,greedy_total_cost = greedy_heuristic(cost_matrix,x)
             num_cities = len(greedy_route)-1
             current_route = greedy_route
+            current_cost = calculate_route_cost(current_route,cost_matrix)
             while temperature >= ending_T:
                 adder_rand = random.randint(2,num_cities-1)
                 left_rand = random.randint(1,num_cities-adder_rand)
                 neighbor_route = current_route[:]
                 neighbor_route[left_rand:(left_rand + adder_rand)] = reversed(neighbor_route[left_rand:(left_rand + adder_rand)])
-                current_route,current_cost = accep_criteria(neighbor_route,current_route,cost_matrix,temperature)
+                current_route,current_cost = accep_criteria(neighbor_route,current_route,cost_matrix,temperature,current_cost)
                 if current_cost < best_cost:
                     best_cost = current_cost
                     best_route = current_route
@@ -111,9 +96,6 @@ def anneal_route(nodes,start_nodes,initial_T,ending_T,cost_matrix, tracepoint_pi
                     current_cost = greedy_total_cost
                     temperature = initial_T
                 temperature = temperature*a
-    solution_pipe.send(Solution( best_cost, best_route))
-    tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best_cost ) )
-
     exit( 0 )
     
 
@@ -121,16 +103,10 @@ def ls2( nodes , timeout : int,seed_num ): #Here we will implement the Simulated
     start_time = time.process_time()# Get current uptime in secconds
     solution_read, solution_write = Pipe()
     tracepoint_read, tracepoint_write = Pipe()
+    solution = Solution()
     random.seed(seed_num)
-    ending_temp = random.random()
-    initial_temp = random.randrange(len(nodes))
     trace = Trace()
-    mat = distance_calculator(nodes)
-    start_nodes = []
-    for i in range(0,len(nodes)):
-        start_nodes.append(i)
-    random.shuffle(start_nodes) 
-    p = Process( target = anneal_route, args = (nodes,start_nodes,initial_temp,ending_temp,mat,tracepoint_write, solution_write ) ) 
+    p = Process( target = anneal_route, args = (nodes,tracepoint_write, solution_write ) ) 
     p.start() # Start the process
 
     # Have the thread spin so that it keeps track of time most accurately

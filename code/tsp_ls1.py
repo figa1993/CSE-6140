@@ -57,28 +57,26 @@ def calculate_route_cost(route,cost_matrix):
     return cost
 
 
-def two_opt(dist_matrix,nodes,start_nodes,tracepoint_pipe : Pipe, solution_pipe : Pipe):
+def two_opt(nodes,tracepoint_pipe : Pipe, solution_pipe : Pipe,random_num :int):
+    start_nodes = []
+    for i in range(0,len(nodes)):
+        start_nodes.append(i)
+    random.shuffle(start_nodes)
     start_time = time.process_time()
-    initial = 1
-    mat = distance_calculator(nodes)
-
+    dist_matrix = distance_calculator(nodes)
+    bestroute = None
+    bestcost = np.inf
     for x in start_nodes:
-        greedy_route,greedy_total_cost = greedy_heuristic(mat,x)
+        greedy_route,_ = greedy_heuristic(dist_matrix,x)
         route_matrix = greedy_route # Use greedy heuristic solution as the starting point
-        if initial == 1:
-            bestroute = greedy_route
-            bestcost = greedy_total_cost
-            initial = 0
         for i in range(1,len(route_matrix)-1):
             for k in range(i+i,len(route_matrix)):
                 improved_route = route_matrix[:]
                 improved_route[i:k] = route_matrix[k-1:i-1:-1] #Here we will take the section to flip and flip it and replace the order.
                 new_cost = calculate_route_cost(improved_route,dist_matrix)
                 if new_cost < bestcost:
-                    # print("Improvement by 2opt made")
                     bestroute = improved_route
                     bestcost = new_cost
-
                     # Construct a solution and send it to output pipe
                     solution = Solution( bestcost )
                     for node in bestroute:
@@ -86,7 +84,26 @@ def two_opt(dist_matrix,nodes,start_nodes,tracepoint_pipe : Pipe, solution_pipe 
                     solution_pipe.send( solution )
                     tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, bestcost ) )
         route_matrix = bestroute
-
+    if random_num == 1:
+        while 1:
+            random.shuffle(start_nodes)
+            route_matrix = start_nodes
+            for i in range(1,len(route_matrix)-1):
+                for k in range(i+i,len(route_matrix)):
+                    improved_route = route_matrix[:]
+                    improved_route[i:k] = route_matrix[k-1:i-1:-1] #Here we will take the section to flip and flip it and replace the order.
+                    new_cost = calculate_route_cost(improved_route,dist_matrix)
+                    if new_cost < bestcost:
+                        bestroute = improved_route
+                        bestcost = new_cost
+                        # Construct a solution and send it to output pipe
+                        solution = Solution( bestcost )
+                        for node in bestroute:
+                            solution.node_list.append( copy.deepcopy(node) )
+                        solution_pipe.send( solution )
+                        tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, bestcost ) )
+            route_matrix = bestroute
+    
     exit( 0 ) # Exit process since all possible greedy startpoints have been hill-climbed.
 
 def printmat(mat):
@@ -95,19 +112,14 @@ def printmat(mat):
             print(mat[i,j].cost, end =" ")  
         print()    
 
-def ls1( nodes , timeout : int,seed_num ):
+def ls1( nodes , timeout : int,seed_num ,random_num : int):
     start_time = time.process_time()
     solution_read, solution_write = Pipe()
     tracepoint_read, tracepoint_write = Pipe()
     random.seed(seed_num)
+    solution = Solution()
     trace = Trace()
-    mat = distance_calculator(nodes)
-    start_nodes = []
-    for i in range(0,len(nodes)):
-        start_nodes.append(i)
-    random.shuffle(start_nodes)
-
-    p = Process( target = two_opt, args = (mat,nodes,start_nodes,tracepoint_write, solution_write ) ) 
+    p = Process( target = two_opt, args = (nodes,tracepoint_write, solution_write,random_num) ) 
     p.start() # Start the process
 
     # Have the thread spin so that it keeps track of time most accurately
