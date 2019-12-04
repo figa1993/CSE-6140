@@ -15,6 +15,7 @@ import heapq
 import numpy as np
 import copy
 import time
+from collections import deque
 
 class Problem:
     __slots__='LB','subgraph','subgraph_cost','union_find','index'
@@ -25,8 +26,9 @@ class Problem:
         self.union_find = union_find
         self.index = index
         self.subgraph_cost = subgraph_cost
+
     def __lt__(self, other):
-        return self.LB < other.LB
+        return ( self.LB / ( self.subgraph.n_edges + 1 ) ) < ( other.LB  / ( self.subgraph.n_edges + 1 ) )
 
 def calculate_lb( edge_list, problem : Problem ):
 
@@ -120,11 +122,13 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
         union_find.add_set( set )
 
     # Construct an empty heapq to represent frontier
-    frontier = []
+    # frontier = []
+    frontier = deque()
 
     # Create the root node and added it to frontier
     root = Problem( int(0), UndirectedGraph( nodes ), 0, union_find, 0 )
-    heapq.heappush( frontier,  root)
+    # heapq.heappush( frontier,  root)
+    frontier.append( root )
 
     # Initialize the solution with a 2MST approximation, so that branches get pruned sooner
     best = mst_approx( copy.deepcopy(union_find), nodes, edge_list )
@@ -135,7 +139,12 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
     # print("best sequence:\t{}".format(best.node_list))
 
     while( len(frontier) > 0 ):
-        current = heapq.heappop( frontier ) # Pop queue to get most promising node
+        # current = heapq.heappop( frontier ) # Pop queue to get most promising node
+        current = frontier.pop()
+
+        if current.LB > best.quality:
+            print( "pruning" )
+            continue
 
         e_index = current.index + 1
 
@@ -150,10 +159,11 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
         # Check if the answers to subproblem can be better than best answer so far
         if(  child_0.LB < best.quality ):
             # Add the subproblem to the frontier
-            heapq.heappush( frontier, child_0 )
-            # print("adding child 0 subproblem with lower bound= {}".format(child_0.LB))
-        # else:
-            # print("pruning non-promising child 0 subproblem")
+            # heapq.heappush( frontier, child_0 )
+            frontier.append( child_0 )
+        #     print("adding child 0 subproblem with lower bound= {}".format(child_0.LB))
+        else:
+            print("pruning non-promising child 0 subproblem")
 
         # Construct subproblem with the next edge
         e = edge_list[current.index] # Get the edge to add
@@ -169,7 +179,7 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
             if u.find() != v.find():
                 union(u, v)  # Take a union of the sets they belong to
             else: # This edge will create an internal cycle, thus it creates infeasible subproblems
-                # print("pruning subproblems with cycle")
+                print("pruning subproblems with cycle")
                 continue
             child_1.union_find.n_sets -= 1 # Decrement the number of sets
 
@@ -184,8 +194,8 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
                     # tracefile_handle.write("{:.2f},{}".format( [time.process_time()-start_time, best.quality] ) )
                     tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best.quality ) )
                     solution_pipe.send( best )
-                    # print( "best quality %d".format(best.quality) )
-                    # print("best sequence:\t{}".format(best.node_list))
+                    print( "best quality %d".format(best.quality) )
+                    print("best sequence:\t{}".format(best.node_list))
             else:
                 # This is a new subproblem
                 child_1.index = e_index
@@ -193,10 +203,13 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
                 # Check if the answers to subproblem can be better than best answer so far
                 if( child_1.LB < best.quality):
                     # Add the subproblem to the frontier
-                    heapq.heappush(frontier, child_1)
+                    # heapq.heappush(frontier, child_1)
+                    frontier.append( child_1 )
                     # print("adding child 1 subproblem with lower bound= {}".format(child_1.LB))
-                # else:
-                    # print( "pruning non-promising child 1 subproblem" )
+                else:
+                    print( "pruning non-promising child 1 subproblem" )
+        else:
+            print( "pruning subproblem which violates path condition" )
     exit( 0 )
 
 
