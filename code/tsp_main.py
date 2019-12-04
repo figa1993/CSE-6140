@@ -33,6 +33,7 @@ if __name__ == '__main__':
     parser.add_argument( '-alg', required=True )
     parser.add_argument( '-time', required=True, type=int )
     parser.add_argument( '-seed', type=int )
+    parser.add_argument( '-random', type=int,default=0)
 
     # Command argument parser to process command line arguments
     args = parser.parse_args()
@@ -57,7 +58,7 @@ if __name__ == '__main__':
         output_filename = '{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time)
     elif args.alg == 'LS1':
         output_filename = '{}_{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time, args.seed)
-        solution, trace = ls1( Nodes, args.time ,args.seed)
+        solution, trace = ls1( Nodes, args.time ,args.seed,args.random)
     elif args.alg == 'LS2':
         output_filename = '{}_{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time, args.seed)
         solution, trace = ls2( Nodes, args.time,args.seed )
