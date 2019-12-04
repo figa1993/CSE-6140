@@ -13,7 +13,9 @@
 % https://www.overleaf.com/latex/templates/acm-conference-proceedings-master-template/pnrfvrrdbfwt
 
 \section{Introduction}
-The Traveling Salesman Problem (TSP) is an NP-Complete computational problem which has been studied extensively for several decades \cite{laporte_1992}. In this paper, techniques for obtaining/approximating the solution to the symmetric Traveling Salesman Problem are developed and compared. A branch-and-bound algorithm using a minimum spanning tree to inform a lower bound on subproblems is presented; which, given enough time, produces an exact solution to the problem. The use of approximation algorithms proves more prudent for larger problems while sacrificing solution quality; a fact which motivated the development of a greedy local search algorithm which explores 1-exchange neighbors.
+The Traveling Salesman Problem (TSP) is an NP-Complete computational problem which has been studied extensively for several decades \cite{laporte_1992}. In this paper, techniques for obtaining/approximating the solution to the symmetric Traveling Salesman Problem are developed and compared. 
+A branch-and-bound algorithm using a minimum spanning tree to inform a lower bound on sub-problems is presented; which, given enough time, produces an exact solution to the problem. The use of approximation algorithms proves more prudent for larger problems while sacrificing solution quality; a fact which motivated the development of a greedy local search algorithm which explores 1-exchange neighbors. 
+In addition, two local search algorithms a 2-Opt Hill Climb and Simulated Annealing Algorithm are explored. These local search algorithms are ideal for finding low error solutions in limited time, although no performance bounds are guaranteed beyond what is expected from the Greedy Algorithms that initially seed them. 
 \section*{Problem Definition}
 The symmetric traveling salesman optimization problem is formalized as follows:\\
 Given a connected undirected graph G consisting of n nodes,$\{v_0, \hdots, v_{n-1}\}$ , with edge weights $d_{ij}$ between nodes i and j.
@@ -27,6 +29,7 @@ $\mathcal{H} = \{ (v_i)_{i=0}^{n-1} : v_0 = v_{n-1}, v_i \neq v_j \quad \forall 
 The symmetric TSP is given by following optimization problem:\\ 
 $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathcal{H}} \quad \sum_{i=0}^{n-2} ||v_i, v_{i+1} || + ||v_0, v_{n-1} || $
 \section*{Related Work}
+
 \section*{Algorithms}
 \begin{algorithm}
 	\caption{  BnB( $\{v_0, \hdots, v_{n-1}\}$ ): Find minimum cost Hamiltonian Cycle for euclidean distances}
@@ -39,7 +42,7 @@ $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathca
 	\end{algorithmic}
 \end{algorithm}
 \begin{algorithm}
-	\caption{  2-Opt Local Search( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances}
+	\caption{  2-Opt\_HC( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances using a Hill Climbing local search algorithm with 2-Opt exchange Neighborhood Creation}
 	\begin{algorithmic} 
 		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
 		\FORALL{ Unordered Pairs $\{i,j\}$}
@@ -53,11 +56,43 @@ $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathca
 			\FOR{j = i+1 to length(Route Matrix)}
 				\STATE reverse route[i] to route[j] and add it to newroute[i] to newroute[j]
 				\IF{cost(newroute) < cost(route)}
-					\STATE route \leftarrow newroute
+					\STATE route $\leftarrow$ newroute
 				\ENDIF
 			\ENDFOR
 		\ENDFOR
 		
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{  Sim\_Anneal( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances using a Hill Climbing local search algorithm with 2-Opt exchange Neighborhood Creation}
+	\begin{algorithmic} 
+		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
+		\STATE Current\_Route: $\{c_0, \hdots, c_{n-1}\}$ Set of Location Nodes denoting the current route for annealing
+		\STATE Best\_Route: $\{b_0, \hdots, b_{n-1}\}$ Set of Location Nodes denoting the best route calculated so far for annealing
+		\STATE Temperature: $T$ Current Annealing Temperature used
+		\STATE Cooling Ratio: $\alpha$ Ratio used to cool the temperature as Simulated Annealing is run
+		\FORALL{ Unordered Pairs $\{i,j\}$}
+			\STATE Construct edge $e = (v_i, v_j, d_{ij})$
+			\STATE Add e to list E of edges in increasing weight order: $E = E \cup \{e\}$
+		\ENDFOR
+		\WHILE{Unassigned nodes in $v$}
+			\STATE Assign Nodes to Route based on Greedy Nearest Neighbor implementation
+		\ENDWHILE
+		\WHILE{Temperature $\geq$ Ending Temperature}
+			\STATE Generate Random 2 Exchange Permutation
+			\IF{Current Solution Cost > Neighbor Route Cost}
+				\STATE Update Current Route
+			\ELSE
+				\STATE Calculate Probability Using Current Temperature
+				\IF{Probability $>$ Randomly Generated Probability}
+					\STATE Update Current Route
+				\ENDIF
+			\ENDIF
+			\IF{Current Cost $leq$ Best Cost}
+				\STATE Update Best route
+			\ENDIF
+		\ENDWHILE
 	\end{algorithmic}
 \end{algorithm}
 \section*{Empirical Evaluation}
