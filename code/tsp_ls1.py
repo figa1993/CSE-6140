@@ -57,18 +57,18 @@ def calculate_route_cost(route,cost_matrix):
     return cost
 
 
-def two_opt(dist_matrix,nodes,start_nodes,tracepoint_pipe : Pipe, solution_pipe : Pipe):
+def two_opt(nodes,tracepoint_pipe : Pipe, solution_pipe : Pipe):
+    start_nodes = []
+    for i in range(0,len(nodes)):
+        start_nodes.append(i)
+    random.shuffle(start_nodes)
     start_time = time.process_time()
-    initial = 1
-    mat = distance_calculator(nodes)
-
+    dist_matrix = distance_calculator(nodes)
+    bestroute = None
+    bestcost = np.inf
     for x in start_nodes:
-        greedy_route,greedy_total_cost = greedy_heuristic(mat,x)
+        greedy_route,_ = greedy_heuristic(dist_matrix,x)
         route_matrix = greedy_route # Use greedy heuristic solution as the starting point
-        if initial == 1:
-            bestroute = greedy_route
-            bestcost = greedy_total_cost
-            initial = 0
         for i in range(1,len(route_matrix)-1):
             for k in range(i+i,len(route_matrix)):
                 improved_route = route_matrix[:]
@@ -101,13 +101,7 @@ def ls1( nodes , timeout : int,seed_num ):
     tracepoint_read, tracepoint_write = Pipe()
     random.seed(seed_num)
     trace = Trace()
-    mat = distance_calculator(nodes)
-    start_nodes = []
-    for i in range(0,len(nodes)):
-        start_nodes.append(i)
-    random.shuffle(start_nodes)
-
-    p = Process( target = two_opt, args = (mat,nodes,start_nodes,tracepoint_write, solution_write ) ) 
+    p = Process( target = two_opt, args = (nodes,tracepoint_write, solution_write ) ) 
     p.start() # Start the process
 
     # Have the thread spin so that it keeps track of time most accurately

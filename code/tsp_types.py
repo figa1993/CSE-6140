@@ -50,7 +50,7 @@ class Solution:
     def __init__(self, in_quality = np.infty ):
         self.quality = in_quality
         self.node_list = deque()
-
+        
 class Tracepoint:
     __slots__ = 'time', 'quality'
     def __init__(self, time : float, quality : int):
