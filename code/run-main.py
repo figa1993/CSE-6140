@@ -18,12 +18,26 @@ if __name__ == '__main__':
     # alg_list = ['Approx', 'BnB', 'LS1', 'LS2']
     alg_list = ['LS1', 'LS2']
 
-    # Run each algorithm on each input file
+    # Run local search algorithms on each input file
     for input_filepath in input_filepaths:
         for alg  in alg_list:
             for seed in range(10):
                 args = [ 'python', str(code_dir / 'tsp_main.py'), '-inst', input_filepath, '-alg', alg, '-time', '20', '-seed', '{}'.format(seed)]
                 p = subprocess.Popen( args )
                 p.wait( 25 ) # Wait for the process to finish before moving on
+
+    # Run Approximation algorithm on each input file
+    for input_filepath in input_filepaths:
+        alg = 'Approx'
+        args = [ 'python', str(code_dir / 'tsp_main.py'), '-inst', input_filepath, '-alg', alg, '-time', '20']
+        p = subprocess.Popen( args )
+        p.wait( 25 ) # Wait for the process to finish before moving on
+
+    # Run Branch and Bound algorithm on each input file
+    for input_filepath in input_filepaths:
+        alg = 'BnB'
+        args = ['python', str(code_dir / 'tsp_main.py'), '-inst', input_filepath, '-alg', alg, '-time', '600']
+        p = subprocess.Popen(args)
+        p.wait(605)  # Wait for the process to finish before moving on
 
     exit( 0 )
