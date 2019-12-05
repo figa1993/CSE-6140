@@ -52,15 +52,15 @@ $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathca
 		\WHILE{Unassigned nodes in $v$}
 			\STATE Assign Nodes to Route based on Greedy Nearest Neighbor implementation
 		\ENDWHILE
-		\FOR{i = 1 to length(Route Matrix)}
-			\FOR{j = i+1 to length(Route Matrix)}
-				\STATE reverse route[i] to route[j] and add it to newroute[i] to newroute[j]
+		\FOR{$i = 1$ to length(Route Matrix)}
+			\FOR{$j = i+1$ to length(Route Matrix)}
+				\STATE reverse array (route[i] to route[j]) and add it to newroute[i] to newroute[j]
 				\IF{cost(newroute) < cost(route)}
 					\STATE route $\leftarrow$ newroute
 				\ENDIF
 			\ENDFOR
 		\ENDFOR
-		
+
 	\end{algorithmic}
 \end{algorithm}
 
@@ -89,14 +89,28 @@ $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathca
 					\STATE Update Current Route
 				\ENDIF
 			\ENDIF
-			\IF{Current Cost $leq$ Best Cost}
-				\STATE Update Best route
+			\IF{Current Cost $\leq$ Best Cost}
+				\STATE Update Best Route
 			\ENDIF
 		\ENDWHILE
 	\end{algorithmic}
 \end{algorithm}
 \section*{Empirical Evaluation}
 \section*{Discussion}
+\textbf{Local Search} The 2-Opt Exchange and Simulated Annealing algorithms each performed relatively 
+well for the majority of data-sets based on algorithm run-time versus performance. For each algorithm instance, a short
+algorithm runtime was able to produce results which were in most cases within 5\% of the optimal solution. Each algorithm setup 
+used a simple Greedy approximation algorithm as the initial path for local search. When testing different initial paths, the Greedy path 
+proved to provide a good mix between accuracy and execution time as a strong initial solution was presented quickly by the algorithm, allowing more local 
+search iterations per time-frame. The Simulated Annealing 
+provided a clear benefit over the 2-opt exchange hill climbing setup however, which was due mainly to the ability of the algorithm to consider 
+a broader neighborhood than the strict neighborhood that the 2-Opt exchange argument considered. To more clearly identify this, the $\alpha$ value was 
+varied with a clear decrease in performance observed when the $\alpha$ value was deviated far from the eventual selection of .98 in either direction. 
+This $\alpha$ value proved to have a reasonable affect on the annealing time-frame which allowed the algorithm to consider the entire search space thoroughly enough 
+while still reaching a reasonable solution in a relatively short period of time. The 2-Opt algorithm struggled with a smaller neighborhood as only 2-Opt exchanges starting from 
+all Greedy solutions were considered, and only those neighborhoods who provided a clear one to one improvement over the current best were used. The power of the Simulated Annealing setup 
+becomes clear when looking at both of these local search algorithms as a similar 2-Opt Exchange neighborhood is considered in both, however the ability of Simulated Annealing to 
+allow worse routes temporarily with the hope that they eventually lead to a more desireable solution proved to be key.
 \section*{Conclusion}
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibfile}
