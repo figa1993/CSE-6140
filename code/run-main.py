@@ -1,5 +1,4 @@
 import glob
-import sys
 import os
 from pathlib import Path
 from inspect import getsourcefile
@@ -16,13 +15,15 @@ if __name__ == '__main__':
     # Get a list of input files in the input directory
     input_filepaths = glob.glob(os.path.join(input_dir, '*.tsp'))
 
-    alg_list = ['Approx', 'BnB', 'LS1', 'LS2']
+    # alg_list = ['Approx', 'BnB', 'LS1', 'LS2']
+    alg_list = ['LS1', 'LS2']
 
     # Run each algorithm on each input file
     for input_filepath in input_filepaths:
         for alg  in alg_list:
-            args = [ 'python', str(code_dir / 'tsp_main.py'), '-inst', input_filepath, '-alg', alg, '-time', '600', '-seed', '6140']
-            p = subprocess.Popen( args )
-            p.wait( 620 ) # Wait for the process to finish before moving on
+            for seed in range(10):
+                args = [ 'python', str(code_dir / 'tsp_main.py'), '-inst', input_filepath, '-alg', alg, '-time', '20', '-seed', '{}'.format(seed)]
+                p = subprocess.Popen( args )
+                p.wait( 25 ) # Wait for the process to finish before moving on
 
     exit( 0 )

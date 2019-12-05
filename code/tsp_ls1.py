@@ -79,7 +79,8 @@ def two_opt(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, random_sample =
                     bestcost = new_cost
                     # Construct a solution and send it to output pipe
                     solution = Solution( bestcost )
-                    for node in bestroute:
+                    for v in range( 0, len(bestroute)-1 ):
+                        node = bestroute[v]
                         solution.node_list.append( copy.deepcopy(node) )
                     solution_pipe.send( solution )
                     tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, bestcost ) )
@@ -98,7 +99,8 @@ def two_opt(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, random_sample =
                         bestcost = new_cost
                         # Construct a solution and send it to output pipe
                         solution = Solution( bestcost )
-                        for node in bestroute:
+                        for v in range( 0, len(bestroute)-1 ):
+                            node = bestroute[v]
                             solution.node_list.append( copy.deepcopy(node) )
                         solution_pipe.send( solution )
                         tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, bestcost ) )
@@ -106,15 +108,13 @@ def two_opt(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, random_sample =
     else:
         return solution
 
-    exit( 0 ) # Exit process since all possible greedy startpoints have been hill-climbed.
-
 def printmat(mat):
     for i in range(0,len(mat)):
         for j in range(0,len(mat)):
             print(mat[i,j].cost, end =" ")  
         print()    
 
-def ls1( nodes , timeout : int,seed_num ,random_num : int):
+def ls1( nodes , timeout : int,seed_num):
     start_time = time.process_time()
     solution_read, solution_write = Pipe()
     tracepoint_read, tracepoint_write = Pipe()

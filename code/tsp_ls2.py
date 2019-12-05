@@ -85,7 +85,8 @@ def anneal_route(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe):
 
                     # Construct a solution and send it to output pipe
                     solution = Solution( best_cost )
-                    for node in best_route:
+                    for v in range( 0, len(best_route)-1 ):
+                        node = best_route[v]
                         solution.node_list.append( copy.deepcopy(node) )
                     solution_pipe.send( solution )
 
