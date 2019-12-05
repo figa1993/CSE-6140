@@ -57,7 +57,7 @@ def calculate_route_cost(route,cost_matrix):
     return cost
 
 
-def two_opt(nodes,tracepoint_pipe : Pipe, solution_pipe : Pipe,random_num :int):
+def two_opt(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, random_sample = True ):
     start_nodes = []
     for i in range(0,len(nodes)):
         start_nodes.append(i)
@@ -84,7 +84,7 @@ def two_opt(nodes,tracepoint_pipe : Pipe, solution_pipe : Pipe,random_num :int):
                     solution_pipe.send( solution )
                     tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, bestcost ) )
         route_matrix = bestroute
-    if random_num == 1:
+    if random_sample:
         while 1:
             random.shuffle(start_nodes)
             route_matrix = start_nodes
@@ -103,7 +103,9 @@ def two_opt(nodes,tracepoint_pipe : Pipe, solution_pipe : Pipe,random_num :int):
                         solution_pipe.send( solution )
                         tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, bestcost ) )
             route_matrix = bestroute
-    
+    else:
+        return solution
+
     exit( 0 ) # Exit process since all possible greedy startpoints have been hill-climbed.
 
 def printmat(mat):
@@ -119,7 +121,7 @@ def ls1( nodes , timeout : int,seed_num ,random_num : int):
     random.seed(seed_num)
     solution = Solution()
     trace = Trace()
-    p = Process( target = two_opt, args = (nodes,tracepoint_write, solution_write,random_num) ) 
+    p = Process( target = two_opt, args = (nodes,tracepoint_write, solution_write) )
     p.start() # Start the process
 
     # Have the thread spin so that it keeps track of time most accurately

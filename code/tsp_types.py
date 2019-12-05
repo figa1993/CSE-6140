@@ -33,14 +33,16 @@ class OutgoingEdge:
         self.cost = cost
 
 class UndirectedGraph:
-    __slots__ = 'node_edges'
+    __slots__ = 'node_edges', 'n_edges'
     def __init__(self , nodes : [Node]):
         self.node_edges=list()
         for node in nodes:
             self.node_edges.append(list()) # For each node create a list to store edges
+        self.n_edges = 0
     def add_edge(self, e: Edge  ):
         self.node_edges[e.src_id].append( OutgoingEdge( e.dest_id, e.cost ) )
         self.node_edges[e.dest_id].append(  OutgoingEdge(e.src_id, e.cost ) )
+        self.n_edges += 1
 
 
 class Solution:
