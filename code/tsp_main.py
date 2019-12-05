@@ -58,7 +58,7 @@ if __name__ == '__main__':
         output_filename = '{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time)
     elif args.alg == 'LS1':
         output_filename = '{}_{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time, args.seed)
-        solution, trace = ls1( Nodes, args.time ,args.seed,args.random)
+        solution, trace = ls1( Nodes, args.time ,args.seed )
     elif args.alg == 'LS2':
         output_filename = '{}_{}_{}_{}'.format(Path(args.inst).stem, args.alg, args.time, args.seed)
         solution, trace = ls2( Nodes, args.time,args.seed )
