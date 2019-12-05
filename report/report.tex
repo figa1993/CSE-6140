@@ -15,7 +15,12 @@
 \section{Introduction}
 The Traveling Salesman Problem (TSP) is an NP-Complete computational problem which has been studied extensively for several decades \cite{laporte_1992}. In this paper, techniques for obtaining/approximating the solution to the symmetric Traveling Salesman Problem are developed and compared. 
 A branch-and-bound algorithm using a minimum spanning tree to inform a lower bound on sub-problems is presented; which, given enough time, produces an exact solution to the problem. The use of approximation algorithms proves more prudent for larger problems while sacrificing solution quality; a fact which motivated the development of a greedy local search algorithm which explores 1-exchange neighbors. 
-In addition, two local search algorithms a 2-Opt Hill Climb and Simulated Annealing Algorithm are explored. These local search algorithms are ideal for finding low error solutions in limited time, although no performance bounds are guaranteed beyond what is expected from the Greedy Algorithms that initially seed them. 
+In addition, two local search algorithms a 2-Opt Hill Climb and Simulated Annealing Algorithm are explored. 
+These local search algorithms are ideal for finding low error solutions in limited time, although no performance bounds are guaranteed beyond 
+what is expected from the Greedy Algorithms that initially seed them. The results derived showed that the local search algorithms were 
+extremely adept at providing relatively good solutions even in the presence of large data sets, however they struggled to consistently return optimal solutions even for the smaller 
+data-sets. Of the two local search algorithms explored, the simulated annealing algorithm provided clear benefits especially for larger data sets which contain a higher number of local optima which can frequently trap
+ other algorithms in a non optimal neighborhood.
 \section*{Problem Definition}
 The symmetric traveling salesman optimization problem is formalized as follows:\\
 Given a connected undirected graph G consisting of n nodes,$\{v_0, \hdots, v_{n-1}\}$ , with edge weights $d_{ij}$ between nodes i and j.
@@ -77,7 +82,7 @@ $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathca
 			\STATE Add e to list E of edges in increasing weight order: $E = E \cup \{e\}$
 		\ENDFOR
 		\WHILE{Unassigned nodes in $v$}
-			\STATE Assign Nodes to Route based on Greedy Nearest Neighbor implementation
+			\STATE Assign next node in route as the remaining node with the shortest distance between itself and the current node
 		\ENDWHILE
 		\WHILE{Temperature $\geq$ Ending Temperature}
 			\STATE Generate Random 2 Exchange Permutation
@@ -97,6 +102,8 @@ $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathca
 \end{algorithm}
 \section*{Empirical Evaluation}
 \section*{Discussion}
+\textbf{Branch-and-Bound}\newline
+\textbf{Approximation Algorithm}\newline
 \textbf{Local Search} The 2-Opt Exchange and Simulated Annealing algorithms each performed relatively 
 well for the majority of data-sets based on algorithm run-time versus performance. For each algorithm instance, a short
 algorithm runtime was able to produce results which were in most cases within 5\% of the optimal solution. Each algorithm setup 
