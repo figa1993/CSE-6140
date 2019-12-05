@@ -79,7 +79,7 @@ def two_opt(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, random_sample =
                     bestcost = new_cost
                     # Construct a solution and send it to output pipe
                     solution = Solution( bestcost )
-                    for v in range( 0, len(bestroute)-1 ):
+                    for v in range( 0, len(bestroute) ):
                         node = bestroute[v]
                         solution.node_list.append( copy.deepcopy(node) )
                     solution_pipe.send( solution )
@@ -99,7 +99,7 @@ def two_opt(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, random_sample =
                         bestcost = new_cost
                         # Construct a solution and send it to output pipe
                         solution = Solution( bestcost )
-                        for v in range( 0, len(bestroute)-1 ):
+                        for v in range( 0, len(bestroute) ):
                             node = bestroute[v]
                             solution.node_list.append( copy.deepcopy(node) )
                         solution_pipe.send( solution )
