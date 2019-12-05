@@ -8,8 +8,10 @@ from tsp_types import Tracepoint
 from tsp_types import Trace
 from UnionFind import UnionFindSet, UnionFind, union
 from tsp_approx import mst_approx
+from tsp_ls1 import two_opt
 
 from multiprocessing import Process, Pipe
+from multiprocessing.connection import Connection
 import bisect
 import heapq
 import numpy as np
@@ -29,6 +31,10 @@ class Problem:
 
     def __lt__(self, other):
         return ( self.LB / ( self.subgraph.n_edges + 1 ) ) < ( other.LB  / ( self.subgraph.n_edges + 1 ) )
+
+class FakeConnection:
+    def send(self, object):
+        return # Do nothing
 
 def calculate_lb( edge_list, problem : Problem ):
 
@@ -131,7 +137,8 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
     frontier.append( root )
 
     # Initialize the solution with a 2MST approximation, so that branches get pruned sooner
-    best = mst_approx( copy.deepcopy(union_find), nodes, edge_list )
+    # best = mst_approx( copy.deepcopy(union_find), nodes, edge_list )
+    best = two_opt( nodes, FakeConnection(), FakeConnection(), False )
     # Send the initial solution to output
     tracepoint_pipe.send( Tracepoint(time.process_time() - start_time, best.quality) )
     solution_pipe.send( best )
@@ -162,13 +169,13 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
             # heapq.heappush( frontier, child_0 )
             frontier.append( child_0 )
         #     print("adding child 0 subproblem with lower bound= {}".format(child_0.LB))
-        else:
-            print("pruning non-promising child 0 subproblem")
+        # else:
+        #     print("pruning non-promising child 0 subproblem")
 
         # Construct subproblem with the next edge
         e = edge_list[current.index] # Get the edge to add
         # Check if path condition ( degree of every node < 3 ) will not be violated
-        if len(current.subgraph.node_edges[e.src_id]) < 2 and len(current.subgraph.node_edges[e.dest_id]) < 2:
+        if ( len(current.subgraph.node_edges[e.src_id]) < 2 )and ( len(current.subgraph.node_edges[e.dest_id]) < 2 ):
             child_1 = Problem()
             child_1.subgraph = copy.deepcopy(current.subgraph)
             child_1.subgraph_cost = current.subgraph_cost
@@ -179,7 +186,7 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
             if u.find() != v.find():
                 union(u, v)  # Take a union of the sets they belong to
             else: # This edge will create an internal cycle, thus it creates infeasible subproblems
-                print("pruning subproblems with cycle")
+                # print("pruning subproblems with cycle")
                 continue
             child_1.union_find.n_sets -= 1 # Decrement the number of sets
 
@@ -196,6 +203,8 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
                     solution_pipe.send( best )
                     print( "best quality %d".format(best.quality) )
                     print("best sequence:\t{}".format(best.node_list))
+                else:
+                    print( "found suboptimal solution" )
             else:
                 # This is a new subproblem
                 child_1.index = e_index
@@ -206,10 +215,10 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
                     # heapq.heappush(frontier, child_1)
                     frontier.append( child_1 )
                     # print("adding child 1 subproblem with lower bound= {}".format(child_1.LB))
-                else:
-                    print( "pruning non-promising child 1 subproblem" )
-        else:
-            print( "pruning subproblem which violates path condition" )
+                # else:
+                #     print( "pruning non-promising child 1 subproblem" )
+        # else:
+        #     print( "pruning subproblem which violates path condition" )
     exit( 0 )
 
 
