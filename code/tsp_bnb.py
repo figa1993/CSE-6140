@@ -139,6 +139,7 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
     # Initialize the solution with a 2MST approximation, so that branches get pruned sooner
     # best = mst_approx( copy.deepcopy(union_find), nodes, edge_list )
     best = two_opt( nodes, FakeConnection(), FakeConnection(), False )
+    best.node_list.pop()
     # Send the initial solution to output
     tracepoint_pipe.send( Tracepoint(time.process_time() - start_time, best.quality) )
     solution_pipe.send( best )
@@ -150,7 +151,7 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
         current = frontier.pop()
 
         if current.LB > best.quality:
-            print( "pruning" )
+            # print( "pruning" )
             continue
 
         e_index = current.index + 1
@@ -201,10 +202,10 @@ def bnb( nodes,  tracepoint_pipe : Pipe, solution_pipe : Pipe ):
                     # tracefile_handle.write("{:.2f},{}".format( [time.process_time()-start_time, best.quality] ) )
                     tracepoint_pipe.send( Tracepoint( time.process_time() - start_time, best.quality ) )
                     solution_pipe.send( best )
-                    print( "best quality %d".format(best.quality) )
-                    print("best sequence:\t{}".format(best.node_list))
-                else:
-                    print( "found suboptimal solution" )
+                    # print( "best quality %d".format(best.quality) )
+                    # print("best sequence:\t{}".format(best.node_list))
+                # else:
+                    # print( "found suboptimal solution" )
             else:
                 # This is a new subproblem
                 child_1.index = e_index
