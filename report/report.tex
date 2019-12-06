@@ -3,6 +3,7 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{booktabs}
+\usepackage{hyperref}
 
 \begin{document}
 
@@ -21,7 +22,9 @@ These local search algorithms are ideal for finding low error solutions in limit
 what is expected from the Greedy Algorithms that initially seed them. The results derived showed that the local search algorithms were 
 extremely adept at providing relatively good solutions even in the presence of large data sets, however they struggled to consistently return optimal solutions even for the smaller 
 data-sets. Of the two local search algorithms explored, the simulated annealing algorithm provided clear benefits especially for larger data sets which contain a higher number of local optima which can frequently trap
- other algorithms in a non optimal neighborhood.
+ other algorithms in a non optimal neighborhood. \textit{Note: For the purposes of this project the Simulated Annealing 
+ and Approximation Algorithms are considered to be the two primary algorithms for scoring purposes, with the Branch-and-Bound and 
+ 2-OPT Hill Climb serving as the extra credit algorithms.}
 \section*{Problem Definition}
 The symmetric traveling salesman optimization problem is formalized as follows:\\
 Given a connected undirected graph G consisting of n nodes,$\{v_0, \hdots, v_{n-1}\}$ , with edge weights $d_{ij}$ between nodes i and j.
@@ -121,73 +124,73 @@ problem which will be extremely important given the increase in the use of Big D
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS1_QRTD.png}}
     \caption{QRTD for the 2-OPT Hill Climb on the Toronto Dataset}
-    \label{fig1}
+    \label{fig:1}
 \end{figure}
 
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS2_QRTD.png}}
     \caption{QRTD for the Simulated Annealing on the Toronto Dataset}
-    \label{fig2}
+    \label{fig:2}
 \end{figure}
 
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/UMissouri_LS1_QRTD.png}}
     \caption{QRTD for the 2-OPT Hill Climb on the UMissouri Dataset}
-    \label{fig3}
+    \label{fig:3}
 \end{figure}
 
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/UMissouri_LS2_QRTD.png}}
     \caption{QRTD for Simulated Annealing on the UMissouri Dataset}
-    \label{fig4}
+    \label{fig:4}
 \end{figure}
 
 The Qualified Runtime Distribution (QRTD) graphs for UMissouri show the major difference between the two local search algorithms, being that the 
 Simulated Annealing algorithm not only performs better but is able to continue to increase its accuracy with a much higher 
-probability as the algorithm continues to run. \ref{fig4} additionally shows that the Simulated Annealing algorithm is able 
+probability as the algorithm continues to run. \autoref{fig:4} additionally shows that the Simulated Annealing algorithm is able 
 to reach a good solution quickly, and then iterate on it initially relatively quickly. However, we see that as the solution moves 
 closer to the optimal set the slope of the line begins to flatten out as the improvements take longer to make, something that intuitively makes sense 
 as the set of possible solutions which are an improvement over the current solution decrease, while the search space remains stable.
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS1_SQD.png}}
     \caption{SQD for 2-OPT Hill Climb on the Toronto Dataset}
-    \label{fig5}
+    \label{fig:5}
 \end{figure}
 
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS2_SQD.png}}
     \caption{SQD for Simulated Annealing on the Toronto Dataset}
-    \label{fig6}
+    \label{fig:6}
 \end{figure}
 
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/UMissouri_LS1_SQD.png}}
     \caption{SQD for the 2-OPT Hill Climb on the UMissouri Dataset}
-    \label{fig7}
+    \label{fig:7}
 \end{figure}
 
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/UMissouri_LS2_SQD.png}}
     \caption{SQD for Simulated Annealing on the UMissouri Dataset}
-    \label{fig8}
+    \label{fig:8}
 \end{figure}
 The Solution Quality Distribution (SQD) graphs show the difference in the algorithms due to the 
 highly random nature of the Simulated Annealing implementation in comparison to the 2-OPT Hill Climb 
-implementation. When looking at \ref{5} and \ref{7} we observe that the solution qualities relative to time over all of 
+implementation. When looking at \autoref{fig:5} and \autoref{fig:7} we observe that the solution qualities relative to time over all of 
 the runs are almost always the same when the values are truncated to two decimal places. This is in contrast to the 
-Simulated Annealing algorithms shown in \ref{6} and \ref{8} where the time is takes to reach a specified solution quality 
+Simulated Annealing algorithms shown in \autoref{fig:6} and \autoref{fig:8} where the time is takes to reach a specified solution quality 
 varies much more. Considering the different use-cases for an algorithm such as this there are situations where both cases are desireable, 
 depending on whether speed or dependability are more important.
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS1_Box.png}}
     \caption{Box Plot for 2-OPT Hill Climb on the Toronto Dataset}
-    \label{fig9}
+    \label{fig:9}
 \end{figure}
 
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS2_Box.png}}
     \caption{Box Plot for Simulated Annealing on the Toronto Dataset}
-    \label{fig10}
+    \label{fig:10}
 \end{figure}
 
 \begin{figure}[htbp]
@@ -201,10 +204,10 @@ depending on whether speed or dependability are more important.
     \caption{Box Plot for Simulated Annealing on the UMissouri Dataset}
     \label{fig12}
 \end{figure}
-The box plot detailed in \ref{fig10} is especially interesting with regards to the way which the runtimes
-change as the error of the algorithm decreases. The first box plot shows the runtimes to reach a relative error of 10\%, while the third plot 
-shows the runtimes for a solution error of 17\%. The lower error calculations not only have greater magnitude, but also a much higher variance 
-which shows not only the obvious increase in execution time but the increase in rumtime variability.
+The box plot detailed in \autoref{fig:10} is especially interesting with regards to the way which the run-times
+change as the error of the algorithm decreases. The first box plot shows the run-times to reach a relative error of 10\%, while the third plot 
+shows the run-times for a solution error of 17\%. The lower error calculations not only have greater magnitude, but also a much higher variance 
+which shows not only the obvious increase in execution time but the increase in run-time variability.
 
  \clearpage
 \section*{Discussion}
