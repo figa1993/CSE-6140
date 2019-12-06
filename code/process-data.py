@@ -120,10 +120,4 @@ if __name__ == '__main__':
             output_file.write(df.to_latex())
             output_file.write('\\end{table}\n')
 
-    # output_filepath = output_dir / 'comprehensive_table.tex'
-    # with open(output_filepath, 'w') as output_file:
-    #     output_file.write( df.to_latex() )
-
-
-
     exit( 0 )
