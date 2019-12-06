@@ -57,17 +57,32 @@ def calculate_route_cost(route,cost_matrix):
     return cost
 
 
-def two_opt(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, random_sample = True ):
+def two_opt(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, random_sample = True, seed :int = 0 ):
+    start_time = time.process_time()
+    random.seed(seed)
     start_nodes = []
     for i in range(0,len(nodes)):
         start_nodes.append(i)
     random.shuffle(start_nodes)
-    start_time = time.process_time()
     dist_matrix = distance_calculator(nodes)
     bestroute = None
     bestcost = np.inf
     for x in start_nodes:
-        greedy_route,_ = greedy_heuristic(dist_matrix,x)
+
+        greedy_route, greedy_total_cost = greedy_heuristic(dist_matrix,x)
+        if greedy_total_cost < bestcost:
+            bestcost = greedy_total_cost
+            bestroute = greedy_route
+            # print('Optimal updated by greedy')
+
+            # Construct a solution and send it to output pipe
+            solution = Solution(bestcost)
+            for v in range(0, len(bestroute) ):
+                node = bestroute[v]
+                solution.node_list.append(copy.deepcopy(node))
+            solution_pipe.send(solution)
+            tracepoint_pipe.send(Tracepoint(time.process_time() - start_time, bestcost))
+
         route_matrix = greedy_route # Use greedy heuristic solution as the starting point
         for i in range(1,len(route_matrix)-1):
             for k in range(i+i,len(route_matrix)):
@@ -118,10 +133,9 @@ def ls1( nodes , timeout : int,seed_num):
     start_time = time.process_time()
     solution_read, solution_write = Pipe()
     tracepoint_read, tracepoint_write = Pipe()
-    random.seed(seed_num)
     solution = Solution()
     trace = Trace()
-    p = Process( target = two_opt, args = (nodes,tracepoint_write, solution_write) )
+    p = Process( target = two_opt, args = (nodes,tracepoint_write, solution_write, seed_num) )
     p.start() # Start the process
 
     # Have the thread spin so that it keeps track of time most accurately
