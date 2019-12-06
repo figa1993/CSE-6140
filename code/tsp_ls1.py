@@ -1,8 +1,19 @@
+#-------------------------------------2-Opt Hill Climb Local Search Algorithm-----------------------------------------#
+#The 2-Opt Local Search Hill Climb algorithm considers each possible Greedy route in random order as a starting       #
+#point for the 2-opt exchange hill climb. Once initialized with a given greedy solution, the algorithm considers      #
+#all possible 2-opt neighbors, updating the current optimal value if the current 2-Opt exchange provides a better     #
+#solution than the current. Due to the finite number of combinations considered by the initial algorithm steps, the   #
+#user has the option to include a randomized 2-Opt Exchange portion that will run and attempt to improve on the       #
+#current optimal until the timeout has reached. This gives the algorithm flexability to either run and return a       #
+#relatively low error answer in a short period of time, or use all of the time available to continue to search for a  # 
+#more optimal route.                                                                                                  #
+#---------------------------------------------------------------------------------------------------------------------#                                                                                                #
 from tsp_types import Solution
 from tsp_types import Trace
 from tsp_types import Node
 from tsp_types import Edge
 from tsp_types import Tracepoint
+
 import random
 import numpy as np
 import math
@@ -11,7 +22,7 @@ import copy
 
 from multiprocessing import Process, Pipe
 
-
+#Function to calculate the distance between each location in the problem
 def distance_calculator(nodes):
     num_locs = len(nodes)
     mat = np.empty((num_locs,num_locs), dtype=Edge)
@@ -22,6 +33,7 @@ def distance_calculator(nodes):
                 mat[x,y].cost = np.inf
     return mat
 
+#Function to determine the closest location to the current that is still available
 def get_min_cost(dest_group,rem_nodes):
     min_cost = np.inf
     min_index = np.inf
@@ -31,16 +43,16 @@ def get_min_cost(dest_group,rem_nodes):
             min_index = i
     return min_cost, min_index
 
-#This will solve a greedy problem to give us a place to start
+#Function that returns a greedy route using the given starting node.
 def greedy_heuristic(dist_matrix,index_start):
     initialdist_matrix = dist_matrix
-    start_index = index_start #random.randint(0,dist_matrix.shape[0]-1)
+    start_index = index_start
     total_cost = 0
     route = []
     rem_nodes = np.ones(dist_matrix.shape[0])
     rem_nodes[start_index] = 0
     route.append(start_index)
-    while rem_nodes.any(): #while there are still unused locations
+    while rem_nodes.any(): #while there are still unused locations keep updating the route
         dist,next_hop = get_min_cost(dist_matrix[start_index,],rem_nodes)
         route.append(next_hop)
         start_index = next_hop
@@ -50,6 +62,7 @@ def greedy_heuristic(dist_matrix,index_start):
     route.append(route[0])
     return route,total_cost
 
+#Function to calculate a given route cost.
 def calculate_route_cost(route,cost_matrix):
     cost = 0
     for i in range(0,len(route)-1):
@@ -123,12 +136,14 @@ def two_opt(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, random_sample =
     else:
         return solution
 
+#Helper function to print a numpy matrix for debugging
 def printmat(mat):
     for i in range(0,len(mat)):
         for j in range(0,len(mat)):
             print(mat[i,j].cost, end =" ")  
         print()    
 
+#Main function which controls the process timing and gathers data using Pipes
 def ls1( nodes , timeout : int,seed_num):
     start_time = time.process_time()
     solution_read, solution_write = Pipe()
