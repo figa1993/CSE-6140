@@ -225,6 +225,15 @@ all Greedy solutions were considered, and only those neighborhoods who provided 
 becomes clear when looking at both of these local search algorithms as a similar 2-Opt Exchange neighborhood is considered in both, however the ability of Simulated Annealing to 
 allow worse routes temporarily with the hope that they eventually lead to a more desireable solution proved to be key.
 \section*{Conclusion}
+As is true with any engineering design, the type of implementation that should be used when looking to solve the TSP is heavily based on the type of results that are desired. All 
+of the algorithms that were tested proved optimal for various situations depending on whether or not the driving factors for the implementation were speed or accuracy of the final solution 
+in relation to the optimal. For example, the Branch-and-Bound algorithm proved to be reasonable when the dataset was relatively small, time was not a factor, and the desired outcome was to obtain a solution 
+close or equal to the optimal. When the solution space ballooned the branch-and-bound did not provide as good of results compared to the extra time that it took to traverse the solution space, often becoming stuck 
+traversing branches which in the end proved worse or not much better than previous solutions. For these larger cases both the Simulated Annealing and 2-OPT Hill Climb algorithms performed in many cases better than the Branch-and-Bound 
+algorithm in considerably less time. Had the Branch-and-Bound algorithm been given hours to run instead of the designated 10 minutes, the solution returned likely would have been much closer to optimal than the Local Search algorithms were able 
+to provide. However, when compute power and time is a constraint the Local Search algorithms proved to be the optimal method for evaluating the TSP algorithm. The Approximation algorithm in all cases returned with the greatest error, something 
+which is to be expected based on the algorithm implementation. However, the extremely short runtimes make the approximation algorithm reasonable when looking to computer an initial solution, or when solution error is not the most important factor to consider 
+execution time is prioritized.
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibfile}
 \end{document}
