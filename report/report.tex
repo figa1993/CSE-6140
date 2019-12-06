@@ -34,9 +34,20 @@ $\mathcal{H} = \{ (v_i)_{i=0}^{n-1} : v_0 = v_{n-1}, v_i \neq v_j \quad \forall 
 The symmetric TSP is given by following optimization problem:\\ 
 $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathcal{H}} \quad \sum_{i=0}^{n-2} ||v_i, v_{i+1} || + ||v_0, v_{n-1} || $
 \section*{Related Work}
-
+The Traveling Salesman Problem has been a widely studied in the fields of graph theory and computational 
+algorithms for almost 200 years. Long considered impossible, formal methods for restricting the problem space using 
+approximation algorithms, similar to the 2MST approximation used here. With formal methods to approximate routes to given accuracies solving the problem 
+for large data-sets became feasible in practice. With a good starting point for lower bounds, methods such as the Branch-and-Bound method used in this paper 
+could now solve large data-sets by limiting the search space using the previously calculated lower bounds given by the approximation guarantee. Recently in 2011 
+researchers from Stanford and McGill Universities were able to improve upon the approximation algorithm developed by Nicos Christofides 
+in 1976 which had defined performance bounds of at most 50\% greater than the true optimal solution when they developed an approximation technique 
+which improved upon Christofides' algorithm by four hundredths of a trillionth of a trillionth of a trillionth of a trillionth of a percent, a staggeringly small 
+value in most other scenarios. Although this improvement was relatively minimal, it broke open a wall that existed in the world of computer science for over 35 years, proving 
+that in practice a better solution was possible. With the rise of Quantum Computing improved results for the Traveling Salesman Problem will not only be made possible by improved algorithms, 
+but also by the exponential increase in processing power that the Quantum Technology brings. With this technology on the rise we are poised to see major improvements in the runtime of NP-Hard algorithms such as the TSP 
+problem which will be extremely important given the increase in the use of Big Data throughout virtually every industry. \cite{CS_Sci}
 \section*{Algorithms}
-\begin{algorithm}
+\begin{algorithm}[H] 
 	\caption{  BnB( $\{v_0, \hdots, v_{n-1}\}$ ): Find minimum cost Hamiltonian Cycle for euclidean distances}
 	\begin{algorithmic} 
 		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
@@ -46,7 +57,7 @@ $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathca
 		\ENDFOR
 	\end{algorithmic}
 \end{algorithm}
-\begin{algorithm}
+\begin{algorithm}[H] 
 	\caption{  2-Opt\_HC( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances using a Hill Climbing local search algorithm with 2-Opt exchange Neighborhood Creation}
 	\begin{algorithmic} 
 		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
@@ -69,7 +80,7 @@ $P^*=(v^*_i)_{i=0}^{n-1} =\quad  \stackrel{argmin}{(v_i)_{i=0}^{n-1} \in \mathca
 	\end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}
+\begin{algorithm}[H] 
 	\caption{  Sim\_Anneal( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances using a Hill Climbing local search algorithm with 2-Opt exchange Neighborhood Creation}
 	\begin{algorithmic} 
 		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
