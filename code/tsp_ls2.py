@@ -1,48 +1,30 @@
+#-------------------------------------Simulated Annealing Local Search Algorithm---------------------------------------#
+#The Simulated Annealing algorithm using a Greedy route as a basis for the annealing process. Throughout the annealing #
+#process, the probability is calculated using the acceptance criteria function, and then is compared to a randomly     #
+#computer value to determine if a neighborhood which provides a less efficient route than the current best should be   #
+#considered. This algorithm will continuously run until the timeout value is reached, continuously considering         #
+#different Greedy routes as starting points. However the inherently random nature of the algorithm ensures that no two #
+#iterations are the same even when using a set initial solution.                                                       #
+#----------------------------------------------------------------------------------------------------------------------#    
 from tsp_types import Solution
 from tsp_types import Trace
 from tsp_types import Node
 from tsp_types import Edge
 from tsp_types import Tracepoint
 from tsp_ls1 import greedy_heuristic
+from tsp_ls1 import distance_calculator
+from tsp_ls1 import get_min_cost
+from tsp_ls1 import calculate_route_cost
+from tsp_ls1 import printmat
 import random
 import numpy as np
 import math
 import time
 import copy
-from multiprocessing import Process, Pipe, Queue
+from multiprocessing import Process, Pipe, Queue  
 
-def distance_calculator(nodes):
-    num_locs = len(nodes)
-    mat = np.empty((num_locs,num_locs), dtype=Edge)
-    for x in range(num_locs):
-        for y in range(num_locs):
-            mat[x,y] = Edge(nodes[x],nodes[y])
-            if x == y:
-                mat[x,y].cost = np.inf
-    return mat
-
-def get_min_cost(dest_group,rem_nodes):
-    min_cost = np.inf
-    min_index = np.inf
-    for i in range (0,dest_group.shape[0]):
-        if (dest_group[i].cost < min_cost) and rem_nodes[i] == 1:
-            min_cost = dest_group[i].cost
-            min_index = i
-    return min_cost, min_index
-
-def calculate_route_cost(route,cost_matrix):
-    cost = 0
-    for i in range(0,len(route)-1):
-        cost += cost_matrix[route[i],route[i+1]].cost
-    return cost
-
-def printmat(mat):
-    for i in range(0,len(mat)):
-        for j in range(0,len(mat)):
-            print(mat[i,j].cost, end =" ")  
-        print()   
-  
-
+#Function that performs the probability calculation if necessary, and returns the route and cost to consider based 
+#on the acceptance criteria probability function.
 def accep_criteria(neighbor_route,current_route,cost_matrix,temperature,current_route_cost):
     neighbor_route_cost = calculate_route_cost(neighbor_route,cost_matrix)
     if neighbor_route_cost < current_route_cost:
@@ -114,7 +96,7 @@ def anneal_route(nodes, tracepoint_pipe : Pipe, solution_pipe : Pipe, seed : int
                 temperature = temperature*a
     exit( 0 )
     
-
+#Main function which controls the process timing and gathers data using Pipes
 def ls2( nodes , timeout : int,seed_num ): #Here we will implement the Simulated Annealing Algorithm
     start_time = time.process_time()# Get current uptime in secconds
     solution_read, solution_write = Pipe()
