@@ -142,6 +142,12 @@ problem which will be extremely important given the increase in the use of Big D
     \label{fig4}
 \end{figure}
 
+The Qualified Runtime Distribution (QRTD) graphs for UMissouri show the major difference between the two local search algorithms, being that the 
+Simulated Annealing algorithm not only performs better but is able to continue to increase its accuracy with a much higher 
+probability as the algorithm continues to run. \ref{fig4} additionally shows that the Simulated Annealing algorithm is able 
+to reach a good solution quickly, and then iterate on it initially relatively quickly. However, we see that as the solution moves 
+closer to the optimal set the slope of the line begins to flatten out as the improvements take longer to make, something that intuitively makes sense 
+as the set of possible solutions which are an improvement over the current solution decrease, while the search space remains stable.
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS1_SQD.png}}
     \caption{SQD for 2-OPT Hill Climb on the Toronto Dataset}
@@ -165,7 +171,13 @@ problem which will be extremely important given the increase in the use of Big D
     \caption{SQD for Simulated Annealing on the UMissouri Dataset}
     \label{fig8}
 \end{figure}
-
+The Solution Quality Distribution (SQD) graphs show the difference in the algorithms due to the 
+highly random nature of the Simulated Annealing implementation in comparison to the 2-OPT Hill Climb 
+implementation. When looking at \ref{5} and \ref{7} we observe that the solution qualities relative to time over all of 
+the runs are almost always the same when the values are truncated to two decimal places. This is in contrast to the 
+Simulated Annealing algorithms shown in \ref{6} and \ref{8} where the time is takes to reach a specified solution quality 
+varies much more. Considering the different use-cases for an algorithm such as this there are situations where both cases are desireable, 
+depending on whether speed or dependability are more important.
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS1_Box.png}}
     \caption{Box Plot for 2-OPT Hill Climb on the Toronto Dataset}
