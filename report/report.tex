@@ -23,9 +23,7 @@ These local search algorithms are ideal for finding low error solutions in limit
 what is expected from the Greedy Algorithms that initially seed them. The results derived showed that the local search algorithms were 
 extremely adept at providing relatively good solutions even in the presence of large data sets, however they struggled to consistently return optimal solutions even for the smaller 
 data-sets. Of the two local search algorithms explored, the simulated annealing algorithm provided clear benefits especially for larger data sets which contain a higher number of local optima which can frequently trap
- other algorithms in a non optimal neighborhood. \textit{Note: For the purposes of this project the Simulated Annealing 
- and Approximation Algorithms are considered to be the two primary algorithms for scoring purposes, with the Branch-and-Bound and 
- 2-OPT Hill Climb serving as the extra credit algorithms.}
+ other algorithms in a non optimal neighborhood.
 \section{Problem Definition}
 The symmetric traveling salesman optimization problem is formalized as follows:\\
 Given a connected undirected graph G consisting of n nodes,$\{v_0, \hdots, v_{n-1}\}$ , with edge weights $d_{ij}$ between nodes i and j.
@@ -134,6 +132,7 @@ Approximation algorithms are of great utility when trying to quickly find a subo
         \STATE return $\vec{w}$
 	\end{algorithmic}
 \end{algorithm}
+\subsection{ 2-OPT Hill Climb (LS1)}
 The 2-OPT Hill Climbing Local Search Algorithm is a type of Local Search Algorithm which implements a 2-OPT Exchange to construct neighborhoods of solutions from an initial solution value.
 The 2-OPT Exchange looks to swap edges throughout the path with the hopes of swapping edges that overlap creating a non-optimal route of travel. Using a Hill Climbing Local Search approach, the 
 algorithm moves through all exchange permutations from an initial solution, updating the current best route if a given exchange is successful in lowering the total route cost. For this implementation of 
@@ -162,6 +161,7 @@ initialize the algorithm with a Greedy Solution rather than using a random path 
 
 	\end{algorithmic}
 \end{algorithm}
+\subsection{ Simulated Annealing (LS2)}
 The Simulated Annealing Algorithm is designed to tackle one of the most prominent problems with the Hill Climb Local Search setup, becoming "stuck" at local optima solutions.
 In a strict hill climb algorithm, if a particular solution represents a local optima, the algorithm will be unable to break free thus providing a lower quality solution. The Simulated Annealing 
 algorithm uses a cooling concept to allow the algorithm to move to solutions with higher costs than the current best route early on in the process when the annealing temperature is still high. By calculating 
@@ -200,12 +200,21 @@ the likelihood for a low error as both the length and volume of runs is increase
 		\ENDWHILE
 	\end{algorithmic}
 \end{algorithm}
-\section*{Empirical Evaluation}
+\newpage
+\section{Empirical Evaluation}
+\subsection{Comprehensive Tables}
+Performance of the algorithms is summarized in tables 1 through 4. The empirical data makes it clear that the approximation algorithm has the worst performance among the studied algorithms, but the smallest runtimes. These findings are in line with expectations since the approximation algorithm is deterministic and will not continue randomly searching after it has found a solution.\\
+\\
+Among the local search algorithms the 2-OPT hill climb algorithm generally  performs as well as or worse than the simulated annealing. Both algorithms were run with the same timeout, which indicates that randomly seeded hill climb algorithm is much less effective at improving solution quality relatively quickly.\\
+\\
+Finally, branch and bound is clearly the most expensive algorithm in terms of runtime and generally does not perform better than the local search algorithms. During development it became clear that the branch and bound algorithm was very sensitive to the solution it used to initialize the upper bound.
 \input{comprehensive_table_Approx.tex} 
 \input{comprehensive_table_BnB.tex} 
 \input{comprehensive_table_LS1.tex} 
 \input{comprehensive_table_LS2.tex} 
-
+\newpage
+\subsection{Local Search Algorithm Statistics}
+\subsubsection{QRTDs}
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS1_QRTD.png}}
     \caption{QRTD for the 2-OPT Hill Climb on the Toronto Dataset}
@@ -236,6 +245,15 @@ probability as the algorithm continues to run. \autoref{fig:4} additionally show
 to reach a good solution quickly, and then iterate on it initially relatively quickly. However, we see that as the solution moves 
 closer to the optimal set the slope of the line begins to flatten out as the improvements take longer to make, something that intuitively makes sense 
 as the set of possible solutions which are an improvement over the current solution decrease, while the search space remains stable.
+\newpage
+\subsubsection{SQDs}
+The Solution Quality Distribution (SQD) graphs show the difference in the algorithms due to the 
+highly random nature of the Simulated Annealing implementation in comparison to the 2-OPT Hill Climb 
+implementation. When looking at \autoref{fig:5} and \autoref{fig:7} we observe that the solution qualities relative to time over all of 
+the runs are almost always the same when the values are truncated to two decimal places. This is in contrast to the 
+Simulated Annealing algorithms shown in \autoref{fig:6} and \autoref{fig:8} where the time is takes to reach a specified solution quality 
+varies much more. Considering the different use-cases for an algorithm such as this there are situations where both cases are desireable, 
+depending on whether speed or dependability are more important.
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS1_SQD.png}}
     \caption{SQD for 2-OPT Hill Climb on the Toronto Dataset}
@@ -259,13 +277,12 @@ as the set of possible solutions which are an improvement over the current solut
     \caption{SQD for Simulated Annealing on the UMissouri Dataset}
     \label{fig:8}
 \end{figure}
-The Solution Quality Distribution (SQD) graphs show the difference in the algorithms due to the 
-highly random nature of the Simulated Annealing implementation in comparison to the 2-OPT Hill Climb 
-implementation. When looking at \autoref{fig:5} and \autoref{fig:7} we observe that the solution qualities relative to time over all of 
-the runs are almost always the same when the values are truncated to two decimal places. This is in contrast to the 
-Simulated Annealing algorithms shown in \autoref{fig:6} and \autoref{fig:8} where the time is takes to reach a specified solution quality 
-varies much more. Considering the different use-cases for an algorithm such as this there are situations where both cases are desireable, 
-depending on whether speed or dependability are more important.
+\newpage
+\subsubsection{Box Plots}
+The box plot detailed in \autoref{fig:10} is especially interesting with regards to the way which the run-times
+change as the error of the algorithm decreases. The first box plot shows the run-times to reach a relative error of 10\%, while the third plot 
+shows the run-times for a solution error of 17\%. The lower error calculations not only have greater magnitude, but also a much higher variance 
+which shows not only the obvious increase in execution time but the increase in run-time variability.
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS1_Box.png}}
     \caption{Box Plot for 2-OPT Hill Climb on the Toronto Dataset}
@@ -289,16 +306,13 @@ depending on whether speed or dependability are more important.
     \caption{Box Plot for Simulated Annealing on the UMissouri Dataset}
     \label{fig12}
 \end{figure}
-The box plot detailed in \autoref{fig:10} is especially interesting with regards to the way which the run-times
-change as the error of the algorithm decreases. The first box plot shows the run-times to reach a relative error of 10\%, while the third plot 
-shows the run-times for a solution error of 17\%. The lower error calculations not only have greater magnitude, but also a much higher variance 
-which shows not only the obvious increase in execution time but the increase in run-time variability.
-
  \clearpage
 \section{Discussion}
-\textbf{Branch-and-Bound}\newline
-\textbf{Approximation Algorithm}\newline
-\textbf{Local Search} The 2-Opt Exchange and Simulated Annealing algorithms each performed relatively 
+\subsection{Branch-and-Bound}
+ The branch and bound algorithm was highly sensitive to the initial solution it used to select an upper bound. If the upper bound solution was poor, then the algorithm struggled to find new solutions as it did not omit many subproblems; surprisingly, if the solution was too good the algorithm also performed poorly as it spent an excessive amount of time performing a depth first search in which it was simply discarding most subproblems. Another reason the algorithm may have performed poorly is due to non-optimal implementation of the Union-Find data structure and Kruskal's algorithm as well as high amount of memory copies when generating child subproblems. In general each iteration of this algorithm was very expensive compared to the local search alternatives which coupled with the large number of subproblems in the search space yielded an algorithm with relatively poor performance.
+\subsection{Approximation Algorithm}
+The approximation algorithm serves as a guaranteed method by which to quickly achieve a solution with some guaranteed quality and should be exclusively used as such. Its practical usage appears very limited with the exception of providing heuristics for problems that may inform a more sophisticated algorithm.
+\subsection{Local Search} The 2-Opt Exchange and Simulated Annealing algorithms each performed relatively 
 well for the majority of data-sets based on algorithm run-time versus performance. For each algorithm instance, a short
 algorithm runtime was able to produce results which were in most cases within 5\% of the optimal solution. Each algorithm setup 
 used a simple Greedy approximation algorithm as the initial path for local search. When testing different initial paths, the Greedy path 

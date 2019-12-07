@@ -115,7 +115,7 @@ if __name__ == '__main__':
         with open(output_filepath, 'w') as output_file:
             # output_file.write(df.to_latex())
             # output_file.write(df.to_latex().replace('\\toprule', '\\toprule\n\caption{{ {} Algorithm Performance Table }}\\\\'.format(item[0]) ) )
-            output_file.write('\\begin{table}\n')
+            output_file.write('\\begin{table}[htpb]\n')
             output_file.write('\caption{{ {} Algorithm Performance Table }}\n'.format(item[0]))
             output_file.write(df.to_latex())
             output_file.write('\\end{table}\n')
