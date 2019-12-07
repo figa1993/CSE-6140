@@ -134,6 +134,12 @@ Branch and bound algorithms are a class of algorithms which are guaranteed to fi
 
 	\end{algorithmic}
 \end{algorithm}
+The 2-OPT Hill Climbing Local Search Algorithm is a type of Local Search Algorithm which implements a 2-OPT Exchange to construct neighborhoods of solutions from an initial solution value.
+The 2-OPT Exchange looks to swap edges throughout the path with the hopes of swapping edges that overlap creating a non-optimal route of travel. Using a Hill Climbing Local Search approach, the 
+algorithm moves through all exchange permutations from an initial solution, updating the current best route if a given exchange is successful in lowering the total route cost. For this implementation of 
+the 2-OPT Exchange initial solutions were constructed using a simple Greedy Algorithm which considers a starting node, and then constructs a route by adding the lowest cost next step to the route given 
+the desired node has not yet been visited. Furthermore, this algorithm considers each possible Greedy Route as an initial solution to further increase the search space. In practice, it proved more reliable to 
+initialize the algorithm with a Greedy Solution rather than using a random path as the initial solution.
 \begin{algorithm}[H] 
 	\caption{  2-Opt\_HC( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances using a Hill Climbing local search algorithm with 2-Opt exchange Neighborhood Creation}
 	\begin{algorithmic} 
@@ -156,7 +162,13 @@ Branch and bound algorithms are a class of algorithms which are guaranteed to fi
 
 	\end{algorithmic}
 \end{algorithm}
-
+The Simulated Annealing Algorithm is designed to tackle one of the most prominent problems with the Hill Climb Local Search setup, becoming "stuck" at local optima solutions.
+In a strict hill climb algorithm, if a particular solution represents a local optima, the algorithm will be unable to break free thus providing a lower quality solution. The Simulated Annealing 
+algorithm uses a cooling concept to allow the algorithm to move to solutions with higher costs than the current best route early on in the process when the annealing temperature is still high. By calculating 
+an acceptance probability that is determined using the current temperature, the algorithm allows the solution space to move out of local optima with higher probabilities when the cooling temperature is high. 
+As the algorithm runs a cooling constant $\alpha$ is used to decrease the system temperature, thus decreasing the probability of selecting a solution that gives a higher cost route. To traverse a neighborhood a 2-OPT exchange 
+with random nodes is performed. The highly random nature of this algorithm causes the solution quality over time to vary greatly run to run, but does however offer the benefit of traversing different solutions spaces each run increasing 
+the likelihood for a low error as both the length and volume of runs is increased.
 \begin{algorithm}[H] 
 	\caption{  Sim\_Anneal( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances using a Hill Climbing local search algorithm with 2-Opt exchange Neighborhood Creation}
 	\begin{algorithmic} 
