@@ -1,3 +1,9 @@
+#######################################################################################################################
+# File: run_main.py
+# Description : Contains script which uses glob patterns to find all input files.
+#               Invokes algorithms to generate solution and trace files that are analyzed for the report
+#######################################################################################################################
+
 import glob
 import os
 from pathlib import Path

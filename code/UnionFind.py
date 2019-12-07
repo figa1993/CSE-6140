@@ -1,3 +1,7 @@
+#######################################################################################################################
+# File: UnionFind.py
+# Description : File containing the definition of the union find class used in all Minimum Spanning Tree calculations
+#######################################################################################################################
 from tsp_types import Node
 from tsp_types import Edge
 import bisect

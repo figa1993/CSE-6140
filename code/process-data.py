@@ -1,3 +1,10 @@
+#######################################################################################################################
+# File: process_data.py
+# Description : Contains script which uses glob patterns to find all trace files.
+#               Uses trace file results to analyze algorithm performance.
+#               Outputs the performance analysis to TeX files that can be embedded into the main report
+#######################################################################################################################
+
 import glob
 import os
 from pathlib import Path

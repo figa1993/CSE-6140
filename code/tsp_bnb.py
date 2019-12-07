@@ -1,3 +1,12 @@
+#######################################################################################################################
+# File: tsp_bnb.py
+# Description : Contains implementation of the branch and bound algorithm.
+#               Contains class definition of a subproblem.
+#               Contains implementation of function which can take a set of edges and traverse them to yield a
+#               Hamiltonian cycle and its cost if it exists
+#               Contains a function with the standard approach to timing out the algorithm and receiving results
+#######################################################################################################################
+
 from tsp_types import Solution
 from tsp_types import Trace
 from tsp_types import Edge

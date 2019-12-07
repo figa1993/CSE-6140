@@ -1,3 +1,10 @@
+#######################################################################################################################
+# File: tsp_main.py
+# Description : Defines a standard API used to invoke the four algorithms studied.
+#               Handles parsing the input file.
+#               Handles outputting results to the file system in the required directory.
+#######################################################################################################################
+
 from inspect import getsourcefile
 from pathlib import Path
 import sys

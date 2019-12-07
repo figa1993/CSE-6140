@@ -1,3 +1,9 @@
+#######################################################################################################################
+# File: tsp_types.py
+# Description : Defines types used throughout the project.
+#               Implements the cost function calculation with correct rounding
+#######################################################################################################################
+
 import numpy as np
 
 from decimal import Decimal, ROUND_HALF_UP
