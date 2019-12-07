@@ -62,6 +62,30 @@ problem which will be extremely important given the increase in the use of Big D
 	\end{algorithmic}
 \end{algorithm}
 \begin{algorithm}[H] 
+	\caption{  2-MST( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances using a 2-MST algorithm}
+	\begin{algorithmic} 
+		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
+        \WHILE{Edges included != (numberof(vertices) - 1)} 
+            \STATE Apply Union Find to Determine if smallest edge remaining makes a Cycle
+            \IF{least expensive edge does not create a cycle based on union find}
+                \STATE Add Edge to Minimum Spanning Tree
+            \ENDIF
+        \ENDWHILE
+        \WHILE{Unvisited Nodes in set remain}
+            \STATE Determine the Deepest Unexplored Vertex in the MST as assign it to $n$
+            \FORALL{Outbound edges from node $n$ }
+                \IF{Node Connected to the Outgoing Edge has not been visited}
+                    \STATE Set the Node to visited
+                    \IF{Next edge from node $n$ can be explored}
+                        \STATE Add next node as the new node to explore and break for loop
+                    \ENDIF
+                \ENDIF
+            \ENDFOR
+        \ENDWHILE
+
+	\end{algorithmic}
+\end{algorithm}
+\begin{algorithm}[H] 
 	\caption{  2-Opt\_HC( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances using a Hill Climbing local search algorithm with 2-Opt exchange Neighborhood Creation}
 	\begin{algorithmic} 
 		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
