@@ -202,12 +202,15 @@ the likelihood for a low error as both the length and volume of runs is increase
 \end{algorithm}
 \newpage
 \section{Empirical Evaluation}
+The algorithms were implemented in python and executed on a version 3.7.0 interpreter. The machine which collected all data had an intel i5-8600k processor clocked at 3.60 GHz, 16 GB of RAM, and ran a 64-bit Windows 10 operating system.
 \subsection{Comprehensive Tables}
 Performance of the algorithms is summarized in tables 1 through 4. The empirical data makes it clear that the approximation algorithm has the worst performance among the studied algorithms, but the smallest runtimes. These findings are in line with expectations since the approximation algorithm is deterministic and will not continue randomly searching after it has found a solution.\\
 \\
 Among the local search algorithms the 2-OPT hill climb algorithm generally  performs as well as or worse than the simulated annealing. Both algorithms were run with the same timeout, which indicates that randomly seeded hill climb algorithm is much less effective at improving solution quality relatively quickly.\\
 \\
-Finally, branch and bound is clearly the most expensive algorithm in terms of runtime and generally does not perform better than the local search algorithms. During development it became clear that the branch and bound algorithm was very sensitive to the solution it used to initialize the upper bound.
+Finally, branch and bound is clearly the most expensive algorithm in terms of runtime and generally does not perform better than the local search algorithms. During development it became clear that the branch and bound algorithm was very sensitive to the solution it used to initialize the upper bound.\\
+\\
+The Simulated Annealing algorithm had highest performance, frequently getting within 10\% relative error of the optimum solution. Branch and bound performance was generally worse achieving a relative error above 10\% for most of the problems with a higher number of vertices. 
 \input{comprehensive_table_Approx.tex} 
 \input{comprehensive_table_BnB.tex} 
 \input{comprehensive_table_LS1.tex} 
@@ -215,6 +218,12 @@ Finally, branch and bound is clearly the most expensive algorithm in terms of ru
 \newpage
 \subsection{Local Search Algorithm Statistics}
 \subsubsection{QRTDs}
+The Qualified Runtime Distribution (QRTD) graphs for UMissouri show the major difference between the two local search algorithms, being that the 
+Simulated Annealing algorithm not only performs better but is able to continue to increase its accuracy with a much higher 
+probability as the algorithm continues to run. \autoref{fig:4} additionally shows that the Simulated Annealing algorithm is able 
+to reach a good solution quickly, and then iterate on it initially relatively quickly. However, we see that as the solution moves 
+closer to the optimal set the slope of the line begins to flatten out as the improvements take longer to make, something that intuitively makes sense 
+as the set of possible solutions which are an improvement over the current solution decrease, while the search space remains stable.
 \begin{figure}[htbp]
     \centerline{\includegraphics[scale=.5]{graphs/Toronto_LS1_QRTD.png}}
     \caption{QRTD for the 2-OPT Hill Climb on the Toronto Dataset}
@@ -238,13 +247,6 @@ Finally, branch and bound is clearly the most expensive algorithm in terms of ru
     \caption{QRTD for Simulated Annealing on the UMissouri Dataset}
     \label{fig:4}
 \end{figure}
-
-The Qualified Runtime Distribution (QRTD) graphs for UMissouri show the major difference between the two local search algorithms, being that the 
-Simulated Annealing algorithm not only performs better but is able to continue to increase its accuracy with a much higher 
-probability as the algorithm continues to run. \autoref{fig:4} additionally shows that the Simulated Annealing algorithm is able 
-to reach a good solution quickly, and then iterate on it initially relatively quickly. However, we see that as the solution moves 
-closer to the optimal set the slope of the line begins to flatten out as the improvements take longer to make, something that intuitively makes sense 
-as the set of possible solutions which are an improvement over the current solution decrease, while the search space remains stable.
 \newpage
 \subsubsection{SQDs}
 The Solution Quality Distribution (SQD) graphs show the difference in the algorithms due to the 
