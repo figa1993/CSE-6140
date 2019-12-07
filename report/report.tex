@@ -7,9 +7,10 @@
 
 \begin{document}
 
-\title{CSE-6140 Final Project}
+\title{CSE-6140, Final Project, 2019}
 \author{Filip Gajowniczek}
 \author{Nick Dargi}
+\acmConference[CSE-6140]{}{Final Project}{2019}
 
 % This template is probably useful
 % https://www.overleaf.com/latex/templates/acm-conference-proceedings-master-template/pnrfvrrdbfwt
@@ -52,7 +53,7 @@ but also by the exponential increase in processing power that the Quantum Techno
 problem which will be extremely important given the increase in the use of Big Data throughout virtually every industry. \cite{CS_Sci}
 \section{Algorithms}
 \subsection{Branch and Bound (BnB)}
-Branch and bound algorithms are a class of algorithms which are guaranteed to find the optimal solution of a problem given enough time. The exactness of the algorithm comes with a trade-off for time complexity which remains exponential. Branch and bound algorithms maintain an upper and lower bound on the optimal solution to a problem and iteratively. The original problem can be considered a set of decisions about whether an edge is in the solution; furthermore, each subproblem can be defined as finding the optimal Hamiltonian Cycle given a set of edges which must be in the cycle, denote these as \textbf{decided edges}. Each problem can be answered by making a decision about a remaining undecided edge and then formulating a subproblem for the remaining edges; in such a manner the original problem can be decomposed into a series of subproblems. The data structure used to represent each subproblem is denoted as a 5-tuple $subproblem(L,\mathcal{D}, C, \mathcal{U}, k)$ consisted of:
+Branch and bound algorithms are a class of algorithms which are guaranteed to find the optimal solution of a problem given enough time. The exactness of the algorithm comes with a trade-off for time complexity which remains exponential. Branch and bound algorithms maintain an upper and lower bound on the optimal solution to a problem and iteratively. The original problem can be considered a set of decisions about whether an edge is in the solution; furthermore, each subproblem can be defined as finding the optimal Hamiltonian Cycle given a set of edges which must be in the cycle, denote these as \textbf{decided edges}. Each problem can be answered by making a decision about a remaining undecided edge and then formulating a subproblem for the remaining edges; in such a manner the original problem can be decomposed into a series of subproblems. The data structure used to represent each subproblem is denoted as a 5-tuple $subproblem(L,\mathcal{D}, C, \mathcal{U}, k)$ consisting of:
 \begin{itemize}
 	\item  Lower bound, L : The lowest possible value for the cost of Hamiltonian cycle that can be constructed with Decided Edges and any of the remaining undecided edges.
 	\item  Decided edges, $\mathcal{D}$: A set of edges which must be in the solution.
@@ -61,7 +62,8 @@ Branch and bound algorithms are a class of algorithms which are guaranteed to fi
 	\item  Decision index, k : An index into a list of edges for which all previous edges have been decided.
 \end{itemize}
  A characteristic of branch and bound algorithms is that they omit investigation of problems that are known to have suboptimal solutions; this is accomplished by calculating a lower bound on each subproblem and keeping track of the best solution encountered throughout the run of the algorithm and omitting subproblems which are guaranteed to have suboptimal solutions. If a subproblem's lower bound exceeds the quality of the best solution, it is apparent that no solution  of the subproblem can be an optimal solution of the original problem. In this paper the lower bound for each subproblem is the minimum spanning tree which contains the decided edges and a subset of the undecided edges. Another key design decision of a branch and bound algorithm is the branching strategy, that is: how subproblems are chosen to be investigated. Based on empirical observations and previous works \cite{bnb-principles} a depth first search strategy for selecting subproblems proved more effective at finding solutions. It was discovered that the effectiveness of this algorithm was strongly influenced by seeding the algorithm with an initial good solution \cite{bnb-principles}; a hill climbing algorithm which optimizes each potential greedy solution was used for this task.
-\begin{algorithm}[H] 
+ \newpage
+\begin{algorithm}[htbp] 
 	\caption{  BnB( $V = \{v_0, \hdots, v_{n-1}\}$ ): Find minimum cost Hamiltonian Cycle for euclidean distances}
 	\begin{algorithmic} 
 		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
@@ -110,28 +112,26 @@ Branch and bound algorithms are a class of algorithms which are guaranteed to fi
 		\STATE return best
 	\end{algorithmic}
 \end{algorithm}
+\subsection{Approximation (Approx)}
+Approximation algorithms are of great utility when trying to quickly find a suboptimal solution that has guarantees on its quality with respect to the optimal solution. The algorithm of this class chosen for this study was the 2-MST approximation algorithm; in this algorithm the minimum spanning tree is found for the input nodes and subsequently traversed in depth first search order from an arbitrary node to yield a sequence of nodes. The edge sequence corresponding to the MST's depth first search vertex sequence is then taken as a solution to the problem. This algorithm has a guarantee of generating a solution which is at most twice as costly as the optimal solution \cite{aa}. The algorithm first begins by generating all the edges and sorting them; an operation with a runtime complexity of $\mathcal{O}(mlogm)$ where m is the number of edges. A union find data structure is constructed by assigning each node a parent and a set rank; an operation which has a runtime complexity of $\mathcal{O}(n)$. The edges in ascending cost order are iterated through, and the cheapest edge which can be added which does not create a cycle is added to the MST; this is known as Kruskal's algorithm and has a runtime complexity of $\mathcal{O}(log(m))$. To yield the solution, an arbitrary vertex is selected as the root and a depth first search is performed; this operation has a runtime complexity of $\mathcal{O}(n)$. Since the number of edges exceeds the number of vertices the overall runtime complexity is $\mathcal{O}(mlogm)$.
 \begin{algorithm}[H] 
 	\caption{  2-MST( $\{v_0, \hdots, v_{n-1}\}$ ): Approximate the minimum cost Hamiltonian Cycle for euclidean distances using a 2-MST algorithm}
 	\begin{algorithmic} 
 		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
-        \WHILE{Edges included != (numberof(vertices) - 1)} 
-            \STATE Apply Union Find to Determine if smallest edge remaining makes a Cycle
-            \IF{least expensive edge does not create a cycle based on union find}
-                \STATE Add Edge to Minimum Spanning Tree
+		\FORALL{ Unordered Pairs $\{i,j\}$}
+			\STATE Construct edge $e = (v_i, v_j, d_{ij})$
+			\STATE Add e to list E of edges in increasing weight order: $E = E \cup \{e\}$
+		\ENDFOR
+		\STATE Initialize set of edges for MST : $MST \leftarrow \emptyset$
+        \WHILE{Edges included != (n - 1)} 
+            \STATE Apply Union Find to Determine if least cost edge remaining makes a Cycle
+            \IF{least expensive edge e does not create a cycle based on union find}
+                \STATE Add Edge e to Minimum Spanning Tree: $MST \leftarrow MST \cup e$
             \ENDIF
         \ENDWHILE
-        \WHILE{Unvisited Nodes in set remain}
-            \STATE Determine the Deepest Unexplored Vertex in the MST as assign it to $n$
-            \FORALL{Outbound edges from node $n$ }
-                \IF{Node Connected to the Outgoing Edge has not been visited}
-                    \STATE Set the Node to visited
-                    \IF{Next edge from node $n$ can be explored}
-                        \STATE Add next node as the new node to explore and break for loop
-                    \ENDIF
-                \ENDIF
-            \ENDFOR
-        \ENDWHILE
-
+        \STATE Select an arbitrary node v as the root
+        \STATE Perform depth first search of MST rooted at v to yield a vertex sequence $\vec{w}$
+        \STATE return $\vec{w}$
 	\end{algorithmic}
 \end{algorithm}
 \begin{algorithm}[H] 
