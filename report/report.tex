@@ -51,14 +51,63 @@ that in practice a better solution was possible. With the rise of Quantum Comput
 but also by the exponential increase in processing power that the Quantum Technology brings. With this technology on the rise we are poised to see major improvements in the runtime of NP-Hard algorithms such as the TSP 
 problem which will be extremely important given the increase in the use of Big Data throughout virtually every industry. \cite{CS_Sci}
 \section{Algorithms}
+\subsection{Branch and Bound (BnB)}
+Branch and bound algorithms are a class of algorithms which are guaranteed to find the optimal solution of a problem given enough time. The exactness of the algorithm comes with a trade-off for time complexity which remains exponential. Branch and bound algorithms maintain an upper and lower bound on the optimal solution to a problem and iteratively. The original problem can be considered a set of decisions about whether an edge is in the solution; furthermore, each subproblem can be defined as finding the optimal Hamiltonian Cycle given a set of edges which must be in the cycle, denote these as \textbf{decided edges}. Each problem can be answered by making a decision about a remaining undecided edge and then formulating a subproblem for the remaining edges; in such a manner the original problem can be decomposed into a series of subproblems. The data structure used to represent each subproblem is denoted as a 5-tuple $subproblem(L,\mathcal{D}, C, \mathcal{U}, k)$ consisted of:
+\begin{itemize}
+	\item  Lower bound, L : The lowest possible value for the cost of Hamiltonian cycle that can be constructed with Decided Edges and any of the remaining undecided edges.
+	\item  Decided edges, $\mathcal{D}$: A set of edges which must be in the solution.
+	\item  Decided Edge Cost, C : Cost of the edges in the Decided Edges set.
+	\item  Connectivity Union Set, $\mathcal{U}$ : A list of association between each node and the connected subgraph it belongs to.
+	\item  Decision index, k : An index into a list of edges for which all previous edges have been decided.
+\end{itemize}
+ A characteristic of branch and bound algorithms is that they omit investigation of problems that are known to have suboptimal solutions; this is accomplished by calculating a lower bound on each subproblem and keeping track of the best solution encountered throughout the run of the algorithm and omitting subproblems which are guaranteed to have suboptimal solutions. If a subproblem's lower bound exceeds the quality of the best solution, it is apparent that no solution  of the subproblem can be an optimal solution of the original problem. In this paper the lower bound for each subproblem is the minimum spanning tree which contains the decided edges and a subset of the undecided edges. Another key design decision of a branch and bound algorithm is the branching strategy, that is: how subproblems are chosen to be investigated. Based on empirical observations and previous works \cite{branch and bound algorithms - principles and examples.} a depth first search strategy for selecting subproblems proved more effective at finding solutions. It was discovered that the effectiveness of this algorithm was strongly influenced by seeding the algorithm with an initial good solution \cite{branch and bound algorithms - principles and examples.}; a hill climbing algorithm which optimizes each potential greedy solution was used for this task.
 \begin{algorithm}[H] 
-	\caption{  BnB( $\{v_0, \hdots, v_{n-1}\}$ ): Find minimum cost Hamiltonian Cycle for euclidean distances}
+	\caption{  BnB( $V = \{v_0, \hdots, v_{n-1}\}$ ): Find minimum cost Hamiltonian Cycle for euclidean distances}
 	\begin{algorithmic} 
 		\STATE Data: $\{v_0, \hdots, v_{n-1}\}$ set of 2-D points
 		\FORALL{ Unordered Pairs $\{i,j\}$}
 			\STATE Construct edge $e = (v_i, v_j, d_{ij})$
 			\STATE Add e to list E of edges in increasing weight order: $E = E \cup \{e\}$
 		\ENDFOR
+		\STATE Initialize best solution : best $\leftarrow$ GreedyHillClimb( $\{v_0, \hdots, v_{n-1}\}$ )
+		\STATE Initialize frontier : $frontier  \leftarrow frontier \cup (0, \emptyset, 0, \{ v_0, \hdots, v_{n01} \}, 0)$
+		\WHILE{frontier is not empty}
+			\STATE Select last added subproblem in frontier and remove it from frontier: $subproblem \leftarrow frontier.pop()$ \vspace{4pt}
+			\STATE Create a new subproblem without the next edge and add it to frontier:\\
+			\STATE Add cost of undecided edge set to lower bound : $child_0.LB \leftarrow child_0.LB + $ subproblem's decided edge set cost
+			\STATE Add cost MST of nodes which are not endpoints of edges in subproblem's decded edge set : \\
+			 $child_0.LB \leftarrow child_0.LB + Cost( MST( V - \{ v : e = \{ v,u \} \in subproblem.\mathcal{D} \}, E-\mathcal{D} ) )$ 
+			\STATE Add cost of edges in cutset between nodes with endpoints in decided edge set and nodes without an endpoint in decided edge set to lower bound.
+			\STATE copy decided edge set since nothing was added: $child.\mathcal{D} \leftarrow subproblem.\mathcal{D}$
+			\STATE copy decided edge set cost since nothing was added: $child.C \leftarrow subproblem.C$ 
+			\STATE copy union set since no edge was added to change connectivity of nodes: $child.\mathcal{U} \leftarrow subproblem.\mathcal{U}$ 
+			\STATE increment decision index since a decision not to include the current index edge has been made: $child.k \leftarrow subproblem.k+1$
+			\STATE Add the child to frontier : $frontier \leftarrow frontier \cup child_0$
+			\vspace{4pt}
+			\IF{ adding $e_{subproblem.k+1}$ does not result in any node having 3 edges in $subproblem.\mathcal{D}$}
+				\IF{adding $e_{subproblem.k+1}$ does not create a cycle for edges in decided edge set}
+					\IF{ adding $e_{subproblem.k+1}$ results in $subproblem.\mathcal{U}$ to be full connected }
+						\STATE Traverse edges to yield Hamiltonian Cycle P
+						\IF{ $cost(P) < cost(best)$ }
+							\STATE Update best solution : $best \leftarrow P$
+						\ENDIF
+					\ELSE
+						\STATE Create a new subproblem with the next edge and add it to frontier:\\
+						\vspace{4pt}
+						\STATE Add $e_{subproblem.k+1}$ to decided edge set: $child.\mathcal{D} \leftarrow subproblem.\mathcal{D} \cup \{ e_{subproblem.k+1} \}$
+						\STATE Add cost of undecided edge set to lower bound : $child_1.LB \leftarrow child_1.LB + $ subproblem's decided edge set cost
+						\STATE Add cost MST of nodes which are not endpoints of edges in subproblem's decded edge set : \\
+						$child_1.LB \leftarrow child_0.LB + Cost( MST( V - \{ v : e = \{ v,u \} \in subproblem.\mathcal{D} \}, E-\mathcal{D} ) )$ 
+						\STATE Add cost of edges in cutset between nodes with endpoints in decided edge set and nodes without an endpoint in decided edge set to lower bound.
+						\STATE Add cost of $e_{subproblem.k+1}$ to decided edge set cost: $child_1.C \leftarrow subproblem.C + cost(e_{subproblem.k+1})$ 
+						\STATE Modify union set by taking union of both of $e_{subproblem.k+1}=\{u,w\}$'s endpoints: $child.\mathcal{U} \leftarrow subproblem.\mathcal{U}.union(u,w)$ 
+						\STATE increment decision index since a decision to include the current index edge has been made: $child.k \leftarrow subproblem.k+1$
+						\STATE Add the child to frontier : $frontier \leftarrow frontier \cup child_1$
+					\ENDIF 
+				\ENDIF
+			\ENDIF
+		\ENDWHILE
+		\STATE return best
 	\end{algorithmic}
 \end{algorithm}
 \begin{algorithm}[H] 
